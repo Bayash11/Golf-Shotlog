@@ -124,11 +124,43 @@ const uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeJSON=(raw,fallback)=>{try{return raw?JSON.parse(raw):fallback}catch(e){console.warn('保存データの読み込みに失敗',e);return fallback}};
 function normalizeRound(r){if(!r||typeof r!=='object')return null;const src=Array.isArray(r.holes)?r.holes:[];if(!src.length)return null;r.holes=src.map((h,i)=>{const base=(h&&typeof h==='object')?h:{};const shots=(Array.isArray(base.shots)?base.shots:[]).map((s,j)=>{const x=(s&&typeof s==='object')?{...s}:{};x.strokeNo=Number.isFinite(+x.strokeNo)&&+x.strokeNo>0?+x.strokeNo:j+1;x.contact=Array.isArray(x.contact)?x.contact:(x.contact?[x.contact]:[]);x.swingTypes=Array.isArray(x.swingTypes)?x.swingTypes:[];x.misses=Array.isArray(x.misses)?x.misses:[];return x});const maxStroke=shots.reduce((m,s)=>Math.max(m,+s.strokeNo||0),0);let next=Number.isFinite(+base.nextStrokeNo)&&+base.nextStrokeNo>0?+base.nextStrokeNo:maxStroke+1;if(next<=maxStroke)next=maxStroke+1;return {...base,number:base.number??i+1,par:base.par??null,yard:base.yard??null,shots,done:!!base.done,manualScore:base.manualScore??null,manualPutts:base.manualPutts??null,nextStrokeNo:next||1,note:base.note??''}});return r}
-const loadRounds=()=>{const a=safeJSON(localStorage.getItem(ROUNDS_KEY),[]);return Array.isArray(a)?a.map(normalizeRound).filter(Boolean):[]}; const saveRounds=x=>localStorage.setItem(ROUNDS_KEY,JSON.stringify(x));
-const loadActive=()=>normalizeRound(safeJSON(localStorage.getItem(ACTIVE_KEY),null)); const saveActive=()=>activeRound&&localStorage.setItem(ACTIVE_KEY,JSON.stringify(activeRound));
-const getClubs=()=>{const a=safeJSON(localStorage.getItem(CLUB_KEY),null);return Array.isArray(a)&&a.length?a:DEFAULT_CLUBS.slice()}; const setClubs=x=>localStorage.setItem(CLUB_KEY,JSON.stringify([...new Set(x.filter(Boolean))]));
+// ---------- Storage helpers ----------
+function storageRead(key, fallback){
+  return safeJSON(localStorage.getItem(key), fallback);
+}
+function storageWrite(key, value){
+  localStorage.setItem(key, JSON.stringify(value));
+}
+function storageRemove(key){
+  localStorage.removeItem(key);
+}
+
+function loadRounds(){
+  const rounds=storageRead(ROUNDS_KEY,[]);
+  return Array.isArray(rounds)?rounds.map(normalizeRound).filter(Boolean):[];
+}
+function saveRounds(rounds){
+  storageWrite(ROUNDS_KEY,rounds);
+}
+function loadActive(){
+  return normalizeRound(storageRead(ACTIVE_KEY,null));
+}
+function saveActive(){
+  if(activeRound)storageWrite(ACTIVE_KEY,activeRound);
+}
+function getClubs(){
+  const clubs=storageRead(CLUB_KEY,null);
+  return Array.isArray(clubs)&&clubs.length?clubs:DEFAULT_CLUBS.slice();
+}
+function setClubs(clubs){
+  storageWrite(CLUB_KEY,[...new Set(clubs.filter(Boolean))]);
+}
 function nav(){const scoreActive=view==='scorecard'; return `<nav class="bottom-nav"><button class="${view==='home'?'active':''}" onclick="go('home')"><span>⌂</span>ホーム</button><button class="${view==='round'?'active':''}" onclick="activeRound?go('round'):go('history')"><span>⚑</span>ラウンド</button><button class="${scoreActive?'active':''}" onclick="activeRound?go('scorecard'):go('history')"><span>▥</span>スコア</button></nav>`}
-function go(v){view=v;render();scrollTo(0,0)}
+function go(nextView){
+  view=nextView;
+  render();
+  scrollTo(0,0);
+}
 function defaultHoles(){return Array.from({length:18},(_,i)=>({number:i+1,par:null,yard:null,shots:[],done:false,manualScore:null,manualPutts:null,nextStrokeNo:1,note:''}))}
 function holeEditorRow(h){return `<div class="hole-row" data-hole="${h.number}"><strong>${h.number}</strong><input class="mini-input par" type="number" inputmode="numeric" placeholder="PAR" min="3" max="6"><input class="mini-input yard" type="number" inputmode="numeric" placeholder="yd"></div>`}
 function home(){
@@ -224,7 +256,16 @@ function holeSummaryTags(h){const shots=h.shots||[],tags=[],first=shots.find(s=>
 function holeFinish(){const h=currentHole(),score=scoreFor(h),putts=puttsFor(h),d=h.par?score-h.par:null;return `<div class="topbar"><button class="back" onclick="go('round')">‹</button><h2>Hole ${h.number}</h2><div class="ghost"></div></div><div class="hole-finish"><div class="finish-hero"><div class="finish-hero-copy"><h2>Hole ${h.number} 完了</h2><div class="meta">${h.par?'PAR '+h.par:'PAR —'}${h.yard?' ・ '+h.yard+'yd':''}</div></div></div><div class="finish-card"><div class="score-box"><div><small>スコア</small><strong>${score}</strong><em>${d==null?'':diffText(d)}</em></div><div><small>パット</small><strong>${putts}</strong><em>PUTT</em></div></div><button class="finish-edit" onclick="manualScore()">打数・パット数を修正</button></div><div class="finish-card"><div class="finish-summary-title">このホールのまとめ</div><div class="finish-tags">${holeSummaryTags(h)}</div><div class="field" style="margin-top:16px"><label>このホールの一言メモ <span class="optional">任意</span></label><input id="holeNote" class="input" value="${esc(h.note||'')}" placeholder=""></div></div><button class="primary next-hole" onclick="nextHole()">${activeHoleIndex===activeRound.holes.length-1?'ラウンドを終了':'次のホールへ →'}</button></div>`}
 function manualScore(){const h=currentHole();const s=prompt('スコア（打数）',scoreFor(h));if(s===null)return;const p=prompt('パット数',puttsFor(h));if(p===null)return;h.manualScore=Math.max(1,+s||scoreFor(h));h.manualPutts=Math.max(0,+p||0);saveActive();render()}
 function nextHole(){const h=currentHole();h.note=$('#holeNote')?.value.trim()||h.note||'';h.done=true;saveActive();if(activeHoleIndex>=activeRound.holes.length-1){completeRound();return}activeHoleIndex++;go('round')}
-function completeRound(){activeRound.completedAt=new Date().toISOString();const rounds=loadRounds();rounds.unshift(activeRound);saveRounds(rounds);localStorage.removeItem(ACTIVE_KEY);window._summaryRound=activeRound;activeRound=null;go('summary')}
+function completeRound(){
+  activeRound.completedAt=new Date().toISOString();
+  const rounds=loadRounds();
+  rounds.unshift(activeRound);
+  saveRounds(rounds);
+  storageRemove(ACTIVE_KEY);
+  window._summaryRound=activeRound;
+  activeRound=null;
+  go('summary');
+}
 function diffText(d){if(d===0)return'E';return d>0?`+${d}`:`${d}`}
 
 function dataMode(){
