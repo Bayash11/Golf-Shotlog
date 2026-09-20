@@ -140,6 +140,15 @@ html,body{background:#f5f8fb}.app{background:#f5f8fb}
 .club-settings-grid{gap:8px}.club-setting-item .chip{background:#fff}.club-setting-item .chip.selected{background:var(--blue);color:#fff}
 .bottom-nav{background:rgba(255,255,255,.96);border-top-color:var(--line)}.bottom-nav button.active{color:var(--blue)}
 @media(max-width:390px){.home-v2-hero{min-height:198px!important;height:198px!important}.home-modes{gap:8px;padding:8px 10px 12px}.home-mode{min-height:132px}}
+</style>
+<style id="club-settings-series-ui">
+.club-settings-form{padding-top:12px}.club-edit-list{display:grid;gap:8px;margin-top:12px}
+.club-edit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px}
+.club-edit-name{height:44px;border:0;background:#f8fbfd;padding:0 11px}.club-edit-name:focus{background:#fff}
+.club-edit-actions{display:flex;gap:5px}.club-order-btn,.club-delete-btn{width:36px;height:36px;border-radius:10px;font-weight:900;font-size:16px}
+.club-order-btn{background:#eaf4fb;color:var(--blue2)}.club-delete-btn{background:#fff0ee;color:#a54842}
+.club-add-row{margin-top:10px}.club-save-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.club-save-actions .primary,.club-save-actions .secondary{min-height:50px}
 </style></head>
 <body><div id="app" class="app"></div><div id="modal" class="modal"></div>
 <script>
@@ -454,11 +463,55 @@ function countMultiField(arr,key){const o={};arr.forEach(x=>asArray(x[key]).forE
 function barRows(obj){const es=Object.entries(obj).sort((a,b)=>b[1]-a[1]);if(!es.length)return'<p class="note">記録がありません。</p>';const max=Math.max(...es.map(x=>x[1]),1);return es.map(([k,v])=>`<div class="bar-row"><b>${esc(k)}</b><div class="bar"><i style="width:${Math.round(v/max*100)}%"></i></div><strong>${v}</strong></div>`).join('')}
 
 // ===== Club settings =====
-function clubSettingsChip(c,sel){const custom=!DEFAULT_CLUBS.includes(c),key=encodeURIComponent(c);return `<div class="club-setting-item"><button class="chip ${sel.includes(c)?'selected':''}" data-clubset="${esc(c)}" onclick="this.classList.toggle('selected')">${esc(c)}</button>${custom?`<button class="club-remove" type="button" aria-label="${esc(c)}を削除" onclick="removeCustomClub(decodeURIComponent('${key}'))">×</button>`:''}</div>`}
-function openClubSettings(){const sel=getClubs();const all=[...new Set([...DEFAULT_CLUBS,...sel])];const m=$('#modal');m.innerHTML=`<div class="sheet"><div class="sheet-head"><h2>クラブ設定</h2><button class="close" onclick="closeModal()">×</button></div><div class="shot-form"><div class="card"><p class="note">標準クラブから選択できます。リストにないクラブは下から追加できます。</p><div id="clubSettingsGrid" class="club-settings-grid">${all.map(c=>clubSettingsChip(c,sel)).join('')}</div></div><div class="card"><h3>クラブを追加</h3><div class="custom-club-add"><input id="customClubName" class="input" autocomplete="off" placeholder="例：7W / 2U / AW / 60°"><button type="button" class="secondary" onclick="addCustomClub()">＋追加</button></div><p class="note">追加したクラブは保存後、ショット入力の番手一覧にも表示されます。</p></div><button class="primary" onclick="saveClubSettings()">保存</button></div></div>`;m.className='modal open';setTimeout(()=>$('#customClubName')?.focus(),60)}
-function addCustomClub(){const i=$('#customClubName');if(!i)return;const name=i.value.trim();if(!name)return;if(name.length>12){alert('クラブ名は12文字以内で入力してください。');return}const exists=$$('[data-clubset]').some(x=>x.dataset.clubset===name);if(exists){const b=$$('[data-clubset]').find(x=>x.dataset.clubset===name);b?.classList.add('selected');i.value='';return}const wrap=document.createElement('div');wrap.className='club-setting-item';wrap.innerHTML=clubSettingsChip(name,[name]);$('#clubSettingsGrid').appendChild(wrap.firstElementChild);i.value='';i.focus()}
-function removeCustomClub(name){const item=$$('[data-clubset]').find(x=>x.dataset.clubset===name)?.closest('.club-setting-item');item?.remove()}
-function saveClubSettings(){const sel=$$('[data-clubset].selected').map(x=>x.dataset.clubset);if(!sel.length){alert('1本以上選択してください');return}setClubs(sel);closeModal()}
+function clubSettingsRow(name,index){
+  const key=encodeURIComponent(name||'');
+  return `<div class="club-edit-row" data-club-row>
+    <input class="input club-edit-name" value="${esc(name||'')}" maxlength="12" autocomplete="off" placeholder="クラブ名">
+    <div class="club-edit-actions">
+      <button type="button" class="club-order-btn" aria-label="上へ" onclick="moveClubSettingsRow(this,-1)">↑</button>
+      <button type="button" class="club-order-btn" aria-label="下へ" onclick="moveClubSettingsRow(this,1)">↓</button>
+      <button type="button" class="club-delete-btn" aria-label="削除" onclick="removeClubSettingsRow(this)">×</button>
+    </div>
+  </div>`
+}
+function openClubSettings(){
+  const clubs=getClubs();
+  const m=$('#modal');
+  m.innerHTML=`<div class="sheet"><div class="sheet-head"><h2>クラブ設定</h2><button class="close" onclick="closeModal()">×</button></div>
+    <div class="shot-form club-settings-form">
+      <div class="card">
+        <p class="note">クラブ名を編集できます。↑↓で並び替え、×で削除できます。</p>
+        <div id="clubEditList" class="club-edit-list">${clubs.map((name,i)=>clubSettingsRow(name,i)).join('')}</div>
+        <button type="button" class="secondary club-add-row" onclick="addClubSettingsRow()">＋ クラブを追加</button>
+      </div>
+      <div class="club-save-actions">
+        <button class="primary" onclick="saveClubSettings()">保存する</button>
+        <button class="secondary" onclick="closeModal()">キャンセル</button>
+      </div>
+    </div>
+  </div>`;
+  m.className='modal open';
+}
+function addClubSettingsRow(){
+  const list=$('#clubEditList');if(!list)return;
+  const wrap=document.createElement('div');wrap.innerHTML=clubSettingsRow('',list.children.length);
+  const row=wrap.firstElementChild;list.appendChild(row);
+  row.querySelector('.club-edit-name')?.focus();
+}
+function removeClubSettingsRow(btn){btn.closest('[data-club-row]')?.remove()}
+function moveClubSettingsRow(btn,delta){
+  const row=btn.closest('[data-club-row]');if(!row)return;
+  const target=delta<0?row.previousElementSibling:row.nextElementSibling;
+  if(!target)return;
+  if(delta<0)row.parentNode.insertBefore(row,target);else row.parentNode.insertBefore(target,row);
+}
+function saveClubSettings(){
+  const names=$$('.club-edit-name').map(x=>x.value.trim()).filter(Boolean);
+  const unique=[...new Set(names)];
+  if(!unique.length){alert('1本以上登録してください');return}
+  if(unique.some(x=>x.length>12)){alert('クラブ名は12文字以内で入力してください。');return}
+  setClubs(unique);closeModal()
+}
 
 // ===== View rendering / boot =====
 const VIEW_RENDERERS=Object.freeze({
