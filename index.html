@@ -166,7 +166,7 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&v.ve
 function mergeConfig(saved,defs){if(!Array.isArray(saved))return defs;const byLabel=new Map(saved.map(x=>[x?.label,x]));const base=defs.map(x=>{const old=byLabel.get(x.label);return old?{...x,...old,custom:false}:x});const custom=saved.filter(x=>x&&x.custom&&String(x.label||'').trim()&&!base.some(d=>d.label===x.label)).map(x=>({...x,label:String(x.label).trim(),custom:true}));return base.concat(custom)}
 function mergeData(v){const s=defaultSettings(),vs=v.settings||{};return{version:1,settings:{...s,...vs,inputs:{...s.inputs,...(vs.inputs||{})},options:{...s.options,...(vs.options||{})},shotStyles:mergeConfig(vs.shotStyles,s.shotStyles),feedback:{good:mergeConfig(vs.feedback?.good,s.feedback.good),miss:mergeConfig(vs.feedback?.miss,s.feedback.miss)}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
-let ui={screen:'home',prev:'home',dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',section:'OUT / IN',tee:'Regular',weather:'晴',green:'A',holeCount:18},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
+let ui={screen:'home',prev:'home',dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
 let lastRenderedScreen=ui.screen;
 let historyReady=false;
 let restoringHistory=false;
@@ -184,14 +184,20 @@ function shotHasGood(s){return (Array.isArray(s.goods)&&s.goods.length>0)||s.qua
 function shotHasMiss(s){return (Array.isArray(s.misses)&&s.misses.length>0)||s.quality==='ミス'}
 function shotDraft(){return{club:'',directionMode:'normal',direction:'中央',greenCell:'中央',flight:'ストレート',goods:[],misses:[],quality:'',landing:'FW',remainingAfterY:'',directDistance:'',feel:'',shotType:'',slope:'',lie:'',penalty:0}}
 function puttDraft(){return{lie:['Flat'],cell:'手前',afterM:1}}
+function resolvedStartSections(){
+ const front=ui.start.frontSection==='その他'?(String(ui.start.frontSectionOther||'').trim()||'その他'):(ui.start.frontSection||'OUT');
+ const back=ui.start.backSection==='その他'?(String(ui.start.backSectionOther||'').trim()||'その他'):(ui.start.backSection||'IN');
+ return[front,back];
+}
+function resolvedStartTee(){return ui.start.tee==='その他'?(String(ui.start.teeOther||'').trim()||'その他'):(ui.start.tee||'Regular')}
 function createRoundFromStart(){
- const sel=data.courses.find(c=>c.id===ui.start.courseId); let name=(sel?.name||ui.start.courseName||'未登録コース').trim(); const tee=ui.start.tee;
+ const sel=data.courses.find(c=>c.id===ui.start.courseId); let name=(sel?.name||ui.start.courseName||'未登録コース').trim(); const tee=resolvedStartTee(); const sections=resolvedStartSections();
  let course=sel;
- if(!course || course.name!==name || course.tee!==tee){
-   const base=sel||defaultCourse(); course={id:uid(),name,tee,sections:['OUT','IN'],holes:base.holes.map(h=>({...h}))}; data.courses.push(course);
+ if(!course || course.name!==name || course.tee!==tee || JSON.stringify(course.sections||['OUT','IN'])!==JSON.stringify(sections)){
+   const base=sel||defaultCourse(); course={id:uid(),name,tee,sections:[...sections],holes:base.holes.map(h=>({...h}))}; data.courses.push(course);
  }
  const count=Number(ui.start.holeCount)||18; const holes=course.holes.slice(0,count).map(h=>({number:h.number,par:h.par,distance:h.distance,pin:'中央',memo:'',shots:[],status:'open',score:null,stage:'shot',currentRemainingY:h.distance,currentPuttRemainingM:null,draft:shotDraft(),puttDraft:puttDraft()}));
- return {id:uid(),sample:false,date:TODAY(),courseName:name,courseId:course.id,section:ui.start.section,tee,weather:ui.start.weather,green:ui.start.green,holeCount:count,holes,currentHoleIndex:0,startedAt:new Date().toISOString(),completedAt:null};
+ return {id:uid(),sample:false,date:TODAY(),courseName:name,courseId:course.id,section:sections.join(' / '),sections:[...sections],tee,weather:ui.start.weather,green:ui.start.green,holeCount:count,holes,currentHoleIndex:0,startedAt:new Date().toISOString(),completedAt:null};
 }
 function roundById(id){if(data.activeRound?.id===id)return data.activeRound;return data.rounds.find(r=>r.id===id)}
 function currentRound(){return data.activeRound}
@@ -213,6 +219,7 @@ function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','club-detail'].includes(ui.screen);
  const screenChanged=lastRenderedScreen!==ui.screen;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
+ root.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','none');el.setAttribute('spellcheck','false')});
  if(!historyReady){
    history.replaceState(historyState(),'');
    historyReady=true;
@@ -232,6 +239,7 @@ function nav(){return`<nav class="nav">
 <button data-nav="settings" class="${ui.screen.startsWith('settings')?'active':''}"><span class="nav-mark">⚙</span>設定</button></nav>`}
 function header(title,back='home',right=''){return`<header class="internal-header"><button class="header-btn" data-go="${back}">‹</button><div class="internal-title">${esc(title)}</div><div>${right}</div></header>`}
 function settingsHeader(back='home'){return`<header class="settings-fixed-header"><button class="settings-back" data-go="${back}">‹ 戻る</button><div class="settings-head-title">設定</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
+function startHeader(){return`<header class="settings-fixed-header"><button class="settings-back" data-go="home">‹ 戻る</button><div class="settings-head-title">ラウンド開始</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 const CLUB_TYPES=[['driver','ドライバー'],['fw','FW'],['ut','UT'],['iron','アイアン'],['wedge','ウェッジ'],['putter','パター'],['other','その他']];
 const CLUB_NAMES={driver:['Dr','MiniDr'],fw:['3W','5W','7W','9W'],ut:['2U','3U','4U','5U','6U','7U'],iron:['3I','4I','5I','6I','7I','8I','9I','P'],wedge:['42°','44°','46°','48°','50°','52°','54°','56°','58°','60°'],putter:['PT']};
 function clubTypeFromName(name){const v=String(name||'').trim();if(v==='Dr'||v==='MiniDr'||v==='1W')return'driver';if(/^\d+W$/i.test(v))return'fw';if(/^\d+U$/i.test(v))return'ut';if(/^(?:[3-9]I|P|PW)$/i.test(v))return'iron';if(/^\d{2}°$/.test(v))return'wedge';if(/^(?:PT|Putter|パター)$/i.test(v))return'putter';return'other'}
@@ -259,15 +267,16 @@ function howto(){
  <div class="list"><div class="list-item"><div><div class="list-title">履歴</div><div class="list-sub">スコアとショット履歴を確認</div></div></div><div class="list-item"><div><div class="list-title">データ</div><div class="list-sub">直近5Rやクラブ別の傾向を振り返る</div></div></div></div>
  </div>`}
 function start(){
- const c=data.courses.find(x=>x.id===ui.start.courseId)||data.courses[0]; const half=ui.courseEditHalf; const hs=(c?.holes||defaultCourse().holes).slice(half?9:0,half?18:9);
- return`${header('ラウンド開始','home')}<div class="page"><div class="card"><div class="card-title">ラウンド設定</div>
+ const c=data.courses.find(x=>x.id===ui.start.courseId)||data.courses[0]; const half=ui.courseEditHalf; const hs=(c?.holes||defaultCourse().holes).slice(half?9:0,half?18:9); const [frontLabel,backLabel]=resolvedStartSections();
+ return`${startHeader()}<div class="page"><div class="card"><div class="card-title">ラウンド設定</div>
  <div class="field"><div class="label">コース</div><select class="select" id="start-course"><option value="new">新しいコースを登録</option>${data.courses.map(x=>`<option value="${x.id}" ${ui.start.courseId===x.id?'selected':''}>${esc(x.name)} / ${esc(x.tee)}</option>`).join('')}</select></div>
  <div class="field"><div class="label">新規コース名</div><input class="input" id="start-course-name" placeholder="例：○○ゴルフクラブ" value="${esc(ui.start.courseName)}"></div>
- <div class="grid2"><div class="field"><div class="label">ラウンド</div><select class="select" id="start-section"><option>OUT / IN</option><option>OUT</option><option>IN</option><option>その他</option></select></div><div class="field"><div class="label">ホール数</div><select class="select" id="start-holecount"><option value="18" ${ui.start.holeCount===18?'selected':''}>18H</option><option value="9" ${ui.start.holeCount===9?'selected':''}>9H</option></select></div></div>
- <div class="grid2"><div class="field"><div class="label">ティー</div><select class="select" id="start-tee">${['Back','Regular','Front','Ladies','その他'].map(v=>`<option ${ui.start.tee===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><div class="label">天気</div><select class="select" id="start-weather">${['晴','曇','雨','雪'].map(v=>`<option ${ui.start.weather===v?'selected':''}>${v}</option>`).join('')}</select></div></div>
+ <div class="field"><div class="label">ホール数</div><select class="select" id="start-holecount"><option value="18" ${ui.start.holeCount===18?'selected':''}>18H</option><option value="9" ${ui.start.holeCount===9?'selected':''}>9H</option></select></div>
+ <div class="grid2"><div class="field"><div class="label">前半コース</div><select class="select" id="start-front-section"><option value="OUT" ${ui.start.frontSection==='OUT'?'selected':''}>OUT</option><option value="IN" ${ui.start.frontSection==='IN'?'selected':''}>IN</option><option value="その他" ${ui.start.frontSection==='その他'?'selected':''}>その他</option></select><input class="input" id="start-front-other" value="${esc(ui.start.frontSectionOther)}" placeholder="例：西" style="margin-top:8px;${ui.start.frontSection==='その他'?'':'display:none'}"></div><div class="field"><div class="label">後半コース</div><select class="select" id="start-back-section"><option value="OUT" ${ui.start.backSection==='OUT'?'selected':''}>OUT</option><option value="IN" ${ui.start.backSection==='IN'?'selected':''}>IN</option><option value="その他" ${ui.start.backSection==='その他'?'selected':''}>その他</option></select><input class="input" id="start-back-other" value="${esc(ui.start.backSectionOther)}" placeholder="例：東" style="margin-top:8px;${ui.start.backSection==='その他'?'':'display:none'}"></div></div>
+ <div class="grid2"><div class="field"><div class="label">ティー</div><select class="select" id="start-tee">${['Back','Regular','Front','Ladies','その他'].map(v=>`<option ${ui.start.tee===v?'selected':''}>${v}</option>`).join('')}</select><input class="input" id="start-tee-other" value="${esc(ui.start.teeOther)}" placeholder="ティー名を入力" style="margin-top:8px;${ui.start.tee==='その他'?'':'display:none'}"></div><div class="field"><div class="label">天気</div><select class="select" id="start-weather">${['晴','曇','雨','雪'].map(v=>`<option ${ui.start.weather===v?'selected':''}>${v}</option>`).join('')}</select></div></div>
  <div class="field"><div class="label">グリーン</div><input class="input" id="start-green" value="${esc(ui.start.green)}" placeholder="A / B / ベントなど"></div></div>
  <div class="section-head"><h2>ホール情報</h2><span>Par / 距離</span></div>
- <div class="segment two" style="margin-bottom:10px"><button class="${half===0?'active':''}" data-action="course-half" data-value="0">1–9</button><button class="${half===1?'active':''}" data-action="course-half" data-value="1">10–18</button></div>
+ <div class="segment two" style="margin-bottom:10px"><button class="${half===0?'active':''}" data-action="course-half" data-value="0" data-section-tab="front">${esc(frontLabel)}</button><button class="${half===1?'active':''}" data-action="course-half" data-value="1" data-section-tab="back">${esc(backLabel)}</button></div>
  <div class="card">${hs.map(h=>`<div class="row" style="margin-bottom:8px"><strong style="width:32px">${h.number}H</strong><select class="select hole-par" data-hole="${h.number}" style="min-height:42px;width:88px">${[3,4,5,6].map(p=>`<option ${h.par===p?'selected':''}>${p}</option>`).join('')}</select><input class="input hole-distance" data-hole="${h.number}" type="number" inputmode="numeric" value="${h.distance}" style="min-height:42px"><span class="small muted">yd</span></div>`).join('')}</div>
  <button class="primary" data-action="start-round">この設定で開始</button></div>`}
 function play(){
@@ -392,13 +401,13 @@ function modal(){if(!ui.modal)return'';const m=ui.modal;if(m.type==='memo'){cons
  if(m.type==='confirmClear'){return`<div class="modal-back"><div class="modal-card"><div class="card-title danger">全データを削除しますか？</div><div class="card-sub">コース、ラウンド、設定を端末から削除します。この操作は取り消せません。</div><button class="primary" style="background:var(--error);margin-top:16px" data-action="confirm-clear">全データを削除</button><button class="header-btn" style="width:100%;margin-top:6px" data-action="close-modal">キャンセル</button></div></div>`}
  return''}
 
-function readStartForm(){ui.start.courseId=document.getElementById('start-course')?.value||'';ui.start.courseName=document.getElementById('start-course-name')?.value||'';ui.start.section=document.getElementById('start-section')?.value||'OUT / IN';ui.start.tee=document.getElementById('start-tee')?.value||'Regular';ui.start.weather=document.getElementById('start-weather')?.value||'晴';ui.start.green=document.getElementById('start-green')?.value||'';ui.start.holeCount=Number(document.getElementById('start-holecount')?.value||18)}
+function readStartForm(){ui.start.courseId=document.getElementById('start-course')?.value||'';ui.start.courseName=document.getElementById('start-course-name')?.value||'';ui.start.frontSection=document.getElementById('start-front-section')?.value||'OUT';ui.start.backSection=document.getElementById('start-back-section')?.value||'IN';ui.start.frontSectionOther=document.getElementById('start-front-other')?.value||'';ui.start.backSectionOther=document.getElementById('start-back-other')?.value||'';ui.start.tee=document.getElementById('start-tee')?.value||'Regular';ui.start.teeOther=document.getElementById('start-tee-other')?.value||'';ui.start.weather=document.getElementById('start-weather')?.value||'晴';ui.start.green=document.getElementById('start-green')?.value||'';ui.start.holeCount=Number(document.getElementById('start-holecount')?.value||18)}
 function saveCourseFields(){const c=data.courses.find(x=>x.id===ui.start.courseId);if(!c)return;document.querySelectorAll('.hole-par').forEach(el=>{const h=c.holes.find(x=>x.number===Number(el.dataset.hole));if(h)h.par=Number(el.value)});document.querySelectorAll('.hole-distance').forEach(el=>{const h=c.holes.find(x=>x.number===Number(el.dataset.hole));if(h)h.distance=Number(el.value)||h.distance});persist()}
 function saveShot(skip=false){const r=currentRound(),h=currentHole(r),d=h.draft||shotDraft();const remEl=document.getElementById('remaining-after'),distEl=document.getElementById('direct-distance');if(remEl)d.remainingAfterY=remEl.value;if(distEl)d.directDistance=distEl.value;const before=Number(h.currentRemainingY||0),after=d.remainingAfterY===''?before:Number(d.remainingAfterY);const direct=Number(d.directDistance);const estimated=Math.max(0,before-after);const s={id:uid(),type:'shot',num:h.shots.length+1,club:skip?'':d.club,directionMode:d.directionMode,direction:skip?'':d.direction,greenCell:skip?'':d.greenCell,flight:skip?'':d.flight,quality:skip?'':(d.misses.length?'ミス':(d.goods.length?'Good':'')),goods:skip?[]:[...d.goods],misses:skip?[]:[...d.misses],feel:d.feel,shotType:d.shotType,slope:d.slope,lie:d.lie,landing:skip?'':d.landing,remainingBeforeY:before,remainingAfterY:after,shotDistance:direct||estimated||null,estimatedDistance:!direct,penalty:skip?0:Number(d.penalty||0)};h.shots.push(s);if(d.remainingAfterY!=='')h.currentRemainingY=after;if(!skip&&d.landing==='Green'){h.stage='putt';h.currentRemainingY=0;h.currentPuttRemainingM=null}h.draft=shotDraft()}
 function savePutt(){const h=currentHole(),d=h.puttDraft;const cup=d.cell==='Cup-in';const after=cup?0:Number(d.afterM||0);h.shots.push({id:uid(),type:'putt',num:h.shots.length+1,puttBeforeM:Number(h.currentPuttRemainingM||0),puttAfterM:after,puttLie:[...d.lie],puttCell:d.cell});h.currentPuttRemainingM=after;h.puttDraft=puttDraft();if(cup)finalizeHole(h,holeComputedScore(h))}
 function finalizeHole(h,score){h.status='done';h.stage='done';h.score=Number(score);h.currentRemainingY=0;h.currentPuttRemainingM=0}
 function finishRound(){const r=currentRound();r.completedAt=new Date().toISOString();data.rounds.push(r);data.activeRound=null;ui.viewRoundId=r.id;ui.prev='home';ui.screen='result';persist();render()}
-function roundJson(r){return JSON.stringify({app:'Shot log',version:1,generatedAt:new Date().toISOString(),round:{id:r.id,date:r.date,courseName:r.courseName,section:r.section,tee:r.tee,weather:r.weather,green:r.green,holeCount:r.holeCount,stats:roundStats(r),holes:r.holes.map(h=>({number:h.number,par:h.par,distance:h.distance,pin:h.pin,memo:h.memo,score:holeScore(h),shots:h.shots}))}},null,2)}
+function roundJson(r){return JSON.stringify({app:'Shot log',version:1,generatedAt:new Date().toISOString(),round:{id:r.id,date:r.date,courseName:r.courseName,section:r.section,sections:r.sections||['OUT','IN'],tee:r.tee,weather:r.weather,green:r.green,holeCount:r.holeCount,stats:roundStats(r),holes:r.holes.map(h=>({number:h.number,par:h.par,distance:h.distance,pin:h.pin,memo:h.memo,score:holeScore(h),shots:h.shots}))}},null,2)}
 
 function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole-sheet],[data-club-detail],[data-edit-hole],[data-delete-shot],[data-club-move-draft],[data-club-delete-draft]');if(!t)return;
  if(t.dataset.nav){ui.prev=ui.screen;ui.screen=t.dataset.nav;render();return} if(t.dataset.go){ui.prev=ui.screen;if(t.dataset.go==='settings-clubs')ui.clubDraft=clubDraftRows();if(t.dataset.go==='settings-styles')ui.styleDraft=JSON.parse(JSON.stringify(data.settings.shotStyles||[]));if(t.dataset.go==='settings-feedback'){ui.feedbackDraft=JSON.parse(JSON.stringify(data.settings.feedback||{good:[],miss:[]}));ui.feedbackTab='good'}ui.screen=t.dataset.go;render();return}
@@ -429,7 +438,7 @@ function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole
  else if(a==='resume-round'){ui.screen='play';render()}
  else if(a==='open-recent-data'){ui.dataTab='recent';ui.screen='data';render()}
  else if(a==='shot-history'){ui.viewRoundId=t.dataset.id;ui.scorecardRoundId=t.dataset.id;ui.prev='result';ui.screen='shot-history';render()}
- else if(a==='course-half'){saveCourseFields();ui.courseEditHalf=Number(t.dataset.value);render()}
+ else if(a==='course-half'){readStartForm();saveCourseFields();ui.courseEditHalf=Number(t.dataset.value);render()}
  else if(a==='start-round'){readStartForm();saveCourseFields();mutate(()=>{data.activeRound=createRoundFromStart();ui.screen='play'})}
  else if(a==='memo'){ui.modal={type:'memo'};render()}
  else if(a==='save-memo'){mutate(()=>{currentHole().memo=document.getElementById('memo-text')?.value||'';ui.modal=null})}
@@ -466,7 +475,23 @@ function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole
 }
 function onChange(e){const el=e.target;
  if(el.dataset.clubField&&ui.clubDraft){const i=Number(el.dataset.index),row=ui.clubDraft[i];if(!row)return;if(el.dataset.clubField==='type'){row.clubType=el.value;row.name=el.value==='driver'?'Dr':el.value==='putter'?'PT':''}else if(el.dataset.clubField==='name'){row.name=el.value}else if(el.dataset.clubField==='typical'){row.typical=el.value}render();return}
- if(el.id==='start-course'){ui.start.courseId=el.value==='new'?'':el.value;render();return}if(el.classList.contains('hole-par')||el.classList.contains('hole-distance')){saveCourseFields();return}if(el.id==='remaining-after'||el.id==='direct-distance'){const h=currentHole();if(!h)return;if(el.id==='remaining-after')h.draft.remainingAfterY=el.value;else h.draft.directDistance=el.value;persist();return}}
+ if(el.id==='start-course'){
+  ui.start.courseId=el.value==='new'?'':el.value;
+  const c=data.courses.find(x=>x.id===ui.start.courseId);
+  if(c){
+   const sec=Array.isArray(c.sections)&&c.sections.length>=2?c.sections:['OUT','IN'];
+   ui.start.frontSection=['OUT','IN'].includes(sec[0])?sec[0]:'その他';ui.start.frontSectionOther=ui.start.frontSection==='その他'?sec[0]:'';
+   ui.start.backSection=['OUT','IN'].includes(sec[1])?sec[1]:'その他';ui.start.backSectionOther=ui.start.backSection==='その他'?sec[1]:'';
+   ui.start.tee=['Back','Regular','Front','Ladies'].includes(c.tee)?c.tee:'その他';ui.start.teeOther=ui.start.tee==='その他'?(c.tee||''):'';
+  }
+  render();return
+ }
+ if(el.id==='start-front-section'){ui.start.frontSection=el.value;render();return}
+ if(el.id==='start-back-section'){ui.start.backSection=el.value;render();return}
+ if(el.id==='start-tee'){ui.start.tee=el.value;render();return}
+ if(el.id==='start-holecount'){ui.start.holeCount=Number(el.value)||18;return}
+ if(el.id==='start-weather'){ui.start.weather=el.value;return}
+ if(el.classList.contains('hole-par')||el.classList.contains('hole-distance')){saveCourseFields();return}if(el.id==='remaining-after'||el.id==='direct-distance'){const h=currentHole();if(!h)return;if(el.id==='remaining-after')h.draft.remainingAfterY=el.value;else h.draft.directDistance=el.value;persist();return}}
 
 function backTarget(){
  if(ui.screen==='home')return null;
@@ -512,7 +537,14 @@ document.addEventListener('touchend',e=>{
 },{passive:true,capture:true});
 document.addEventListener('touchcancel',()=>{edgeSwipe=null},{passive:true,capture:true});
 
-document.addEventListener('click',onClick);document.addEventListener('change',onChange);
+function onInput(e){const el=e.target;
+ if(el.id==='start-course-name')ui.start.courseName=el.value;
+ else if(el.id==='start-front-other'){ui.start.frontSectionOther=el.value;const tab=document.querySelector('[data-section-tab="front"]');if(tab)tab.textContent=el.value.trim()||'その他'}
+ else if(el.id==='start-back-other'){ui.start.backSectionOther=el.value;const tab=document.querySelector('[data-section-tab="back"]');if(tab)tab.textContent=el.value.trim()||'その他'}
+ else if(el.id==='start-tee-other')ui.start.teeOther=el.value;
+ else if(el.id==='start-green')ui.start.green=el.value;
+}
+document.addEventListener('click',onClick);document.addEventListener('change',onChange);document.addEventListener('input',onInput);
 render();
 })();
 </script>
