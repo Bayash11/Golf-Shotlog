@@ -229,7 +229,7 @@ function nav(){return`<nav class="nav">
 <button data-nav="home" class="${ui.screen==='home'?'active':''}"><span class="nav-mark">⌂</span>ホーム</button>
 <button data-nav="history" class="${ui.screen==='history'?'active':''}"><span class="nav-mark">≡</span>履歴</button>
 <button data-nav="data" class="${ui.screen==='data'?'active':''}"><span class="nav-mark">▥</span>データ</button>
-<button data-nav="settings" class="${ui.screen==='settings'?'active':''}"><span class="nav-mark">⚙</span>設定</button></nav>`}
+<button data-nav="settings" class="${ui.screen.startsWith('settings')?'active':''}"><span class="nav-mark">⚙</span>設定</button></nav>`}
 function header(title,back='home',right=''){return`<header class="internal-header"><button class="header-btn" data-go="${back}">‹</button><div class="internal-title">${esc(title)}</div><div>${right}</div></header>`}
 function settingsHeader(back='home'){return`<header class="settings-fixed-header"><button class="settings-back" data-go="${back}">‹ 戻る</button><div class="settings-head-title">設定</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 const CLUB_TYPES=[['driver','ドライバー'],['fw','FW'],['ut','UT'],['iron','アイアン'],['wedge','ウェッジ'],['putter','パター'],['other','その他']];
@@ -282,10 +282,10 @@ function collapsedShot(s,i){
  if(s.type==='putt')return`<div class="shot-card collapsed" data-action="shot-detail" data-shot="${i}"><div class="shot-summary"><span class="shot-num">${i+1}</span><div class="shot-main"><div class="shot-line">PUTT ${Number(s.puttBeforeM).toFixed(1)}m → ${s.puttAfterM===0?'Cup-in':Number(s.puttAfterM).toFixed(1)+'m'}</div><div class="shot-mini">${(s.puttLie||[]).join(' / ')}</div></div><span class="chev">›</span></div></div>`;
  return`<div class="shot-card collapsed" data-action="shot-detail" data-shot="${i}"><div class="shot-summary"><span class="shot-num">${i+1}</span><div class="shot-main"><div class="shot-line">${esc(s.club||'未入力')} ${s.shotDistance?Math.round(s.shotDistance)+'yd':''}</div><div class="shot-mini">${esc(s.direction||s.greenCell||'')} · ${esc(s.flight||'')} · ${esc(s.landing||'')} ${s.penalty?`· +${s.penalty}`:''}</div></div><span class="chev">›</span></div></div>`}
 function shotInput(r,h){
- const d=h.draft||shotDraft(); const settings=data.settings; const greenAuto=(h.currentRemainingY||0)<=Number(settings.greenAutoYards||150); if(greenAuto&&d.directionMode==='normal')d.directionMode='green';
+ const d=h.draft||shotDraft(); if(!Array.isArray(d.goods))d.goods=[];if(!Array.isArray(d.misses))d.misses=[]; const settings=data.settings; const greenAuto=(h.currentRemainingY||0)<=Number(settings.greenAutoYards||150); if(greenAuto&&d.directionMode==='normal')d.directionMode='green';
  const green=d.directionMode==='green';
  return`<div class="shot-card current"><div class="row"><span class="shot-num">${h.shots.length+1}</span><div><div class="card-title" style="margin:0">${h.shots.length+1}打目を記録</div><div class="tiny muted">空欄でも次打へ進めます</div></div></div>
- <div class="divider"></div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.filter(c=>c.name!=='パター').map(c=>`<button class="club-btn ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(c.name)}</button>`).join('')}</div>
+ <div class="divider"></div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.filter(c=>c.clubType!=='putter'&&c.name!=='パター'&&c.name!=='PT').map(c=>`<button class="club-btn ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(c.name)}</button>`).join('')}</div>
  <div class="divider"></div><div class="row between"><div class="label" style="margin:0">方向</div><div class="segment two" style="width:170px"><button class="${!green?'active':''}" data-draft="directionMode" data-value="normal">通常</button><button class="${green?'active':''}" data-draft="directionMode" data-value="green">グリーン</button></div></div>
  <div style="margin-top:10px">${green?greenDirection(d):normalDirection(d)}</div>
  ${settings.inputs.ballFlight?`<div class="divider"></div><div class="label">球筋</div><div class="grid3">${['ドロー','ストレート','フェード'].map(v=>`<button class="chip blue ${d.flight===v?'active':''}" data-draft="flight" data-value="${v}">${v}</button>`).join('')}</div>`:''}
@@ -424,7 +424,6 @@ function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole
  if(t.dataset.clubMove){mutate(()=>{const a=data.settings.clubs,i=a.findIndex(x=>x.id===t.dataset.clubMove),j=clamp(i+Number(t.dataset.dir),0,a.length-1);if(i>=0&&i!==j){const [x]=a.splice(i,1);a.splice(j,0,x)}});return}
  if(t.dataset.clubDelete){mutate(()=>{data.settings.clubs=data.settings.clubs.filter(x=>x.id!==t.dataset.clubDelete)});return}
  if(t.dataset.toggleInput){mutate(()=>{const k=t.dataset.toggleInput;data.settings.inputs[k]=!data.settings.inputs[k]});return}
- if(t.dataset.removeMiss){mutate(()=>{data.settings.options.miss=data.settings.options.miss.filter(x=>x!==t.dataset.removeMiss)});return}
  const a=t.dataset.action;
  if(a==='new-round'){ui.screen='start';render()}
  else if(a==='resume-round'){ui.screen='play';render()}
@@ -460,7 +459,6 @@ function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole
  else if(a==='add-feedback-open'){ui.modal={type:'addFeedback'};render()}
  else if(a==='add-feedback-confirm'){const name=(document.getElementById('custom-feedback-name')?.value||'').trim(),type=ui.feedbackTab;if(name&&ui.feedbackDraft&&!ui.feedbackDraft[type].some(x=>x.label===name)){ui.feedbackDraft[type].push({id:'custom-'+type+'-'+Date.now(),label:name,enabled:true,custom:true});ui.modal=null;render()}}
  else if(a==='save-feedback'){data.settings.feedback=JSON.parse(JSON.stringify(ui.feedbackDraft||{good:[],miss:[]}));persist();ui.feedbackDraft=null;ui.prev='settings-feedback';ui.screen='settings';render();toast('Good・ミス設定を保存しました')}
- else if(a==='add-miss'){const n=(document.getElementById('new-miss')?.value||'').trim();if(n&&!data.settings.options.miss.includes(n))mutate(()=>data.settings.options.miss.push(n))}
  else if(a==='save-round-setting'){const v=Number(document.getElementById('green-auto')?.value||150);mutate(()=>data.settings.greenAutoYards=clamp(v,20,300));toast('保存しました')}
  else if(a==='clear-samples'){mutate(()=>{data.rounds=data.rounds.filter(r=>!r.sample)});toast('サンプルを削除しました')}
  else if(a==='clear-all'){ui.modal={type:'confirmClear'};render()}
