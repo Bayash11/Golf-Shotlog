@@ -138,6 +138,13 @@ function mergeData(v){const s=defaultSettings();return{version:1,settings:{...s,
 let data=load();
 let ui={screen:'home',prev:'home',dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',section:'OUT / IN',tee:'Regular',weather:'晴',green:'A',holeCount:18},courseEditHalf:0,clubId:null};
 let lastRenderedScreen=ui.screen;
+let historyReady=false;
+let restoringHistory=false;
+function historyState(){return{shotlog:true,screen:ui.screen,prev:ui.prev,dataTab:ui.dataTab,viewRoundId:ui.viewRoundId,scorecardRoundId:ui.scorecardRoundId,clubId:ui.clubId}}
+function applyHistoryState(s){
+ if(!s||!s.shotlog){ui.screen='home';ui.prev='home';ui.modal=null;return}
+ ui.screen=s.screen||'home';ui.prev=s.prev||'home';ui.dataTab=s.dataTab||ui.dataTab;ui.viewRoundId=s.viewRoundId||null;ui.scorecardRoundId=s.scorecardRoundId||null;ui.clubId=s.clubId||null;ui.modal=null;
+}
 function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
 function mutate(fn){fn();persist();render()}
 function toast(msg){ui.toast=msg;render();setTimeout(()=>{ui.toast='';render()},1500)}
@@ -172,6 +179,12 @@ function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','settings-clubs','settings-input','settings-round','settings-data','club-detail'].includes(ui.screen);
  const screenChanged=lastRenderedScreen!==ui.screen;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
+ if(!historyReady){
+   history.replaceState(historyState(),'');
+   historyReady=true;
+ }else if(screenChanged&&!restoringHistory){
+   history.pushState(historyState(),'');
+ }
  if(screenChanged){
    lastRenderedScreen=ui.screen;
    requestAnimationFrame(()=>{window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0});
@@ -381,30 +394,40 @@ function backTarget(){
 }
 function swipeBack(){
  if(ui.modal){ui.modal=null;render();return}
+ if(ui.screen==='home')return;
+ if(history.length>1){history.back();return}
  const target=backTarget();if(!target)return;
  ui.prev=ui.screen;ui.screen=target;render();
 }
+window.addEventListener('popstate',e=>{
+ restoringHistory=true;
+ applyHistoryState(e.state);
+ render();
+ restoringHistory=false;
+});
 let edgeSwipe=null;
 document.addEventListener('touchstart',e=>{
  if(e.touches.length!==1)return;
  const p=e.touches[0];
- if(p.clientX<=24)edgeSwipe={x:p.clientX,y:p.clientY,t:Date.now(),horizontal:false};
+ // 画面の完全な端はiOS Safariのネイティブ戻るジェスチャーに任せ、
+ // 少し内側（20〜64px）もアプリ側の予備ジェスチャーとして受ける。
+ if(p.clientX>=20&&p.clientX<=64)edgeSwipe={x:p.clientX,y:p.clientY,t:Date.now(),horizontal:false};
  else edgeSwipe=null;
-},{passive:true});
+},{passive:true,capture:true});
 document.addEventListener('touchmove',e=>{
  if(!edgeSwipe||e.touches.length!==1)return;
  const p=e.touches[0],dx=p.clientX-edgeSwipe.x,dy=p.clientY-edgeSwipe.y;
- if(!edgeSwipe.horizontal&&dx>14&&Math.abs(dx)>Math.abs(dy)*1.25)edgeSwipe.horizontal=true;
+ if(!edgeSwipe.horizontal&&dx>10&&Math.abs(dx)>Math.abs(dy)*1.2)edgeSwipe.horizontal=true;
  if(edgeSwipe.horizontal&&dx>0)e.preventDefault();
-},{passive:false});
+},{passive:false,capture:true});
 document.addEventListener('touchend',e=>{
  if(!edgeSwipe)return;
  const p=e.changedTouches[0],dx=p.clientX-edgeSwipe.x,dy=p.clientY-edgeSwipe.y,dt=Date.now()-edgeSwipe.t;
- const ok=edgeSwipe.horizontal&&dx>=72&&Math.abs(dy)<=70&&dt<=900;
+ const ok=edgeSwipe.horizontal&&dx>=55&&Math.abs(dy)<=80&&dt<=1000;
  edgeSwipe=null;
  if(ok)swipeBack();
-},{passive:true});
-document.addEventListener('touchcancel',()=>{edgeSwipe=null},{passive:true});
+},{passive:true,capture:true});
+document.addEventListener('touchcancel',()=>{edgeSwipe=null},{passive:true,capture:true});
 
 document.addEventListener('click',onClick);document.addEventListener('change',onChange);
 render();
