@@ -37,6 +37,10 @@ button{cursor:pointer}
 .settings-back{border:0;background:transparent;padding:0;min-height:44px;text-align:left;font-size:14px;font-weight:750;color:var(--text)}
 .settings-head-title{text-align:center;font-size:17px;font-weight:800}
 .settings-head-logo{justify-self:end;white-space:nowrap;font-size:16px;font-weight:850;letter-spacing:-.6px}.settings-head-logo .shot{color:#202635}.settings-head-logo .log{color:var(--orange)}
+.round-fixed-header{position:sticky;top:0;z-index:45;min-height:64px;padding:calc(5px + env(safe-area-inset-top)) 12px 7px;background:rgba(248,250,252,.97);border-bottom:1px solid rgba(221,227,234,.9);display:grid;grid-template-columns:74px 1fr auto;align-items:center;gap:8px}
+.round-back{border:0;background:transparent;padding:0;min-height:44px;text-align:left;font-size:14px;font-weight:750;color:var(--text)}
+.round-head-title{justify-self:center;white-space:nowrap;font-size:18px;font-weight:850;letter-spacing:-.6px}.round-head-title .round{color:#202635}.round-head-title .record{color:var(--orange)}
+.round-head-actions{display:flex;align-items:center;gap:4px;justify-self:end}.round-head-actions .header-btn{min-width:auto;padding:0 8px;font-size:12px;font-weight:750}
 .settings-section-title{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 14px}.settings-section-title h2{font-size:22px;margin:0;font-weight:850}.settings-section-title h2:before{content:"";display:inline-block;width:5px;height:28px;border-radius:99px;background:var(--orange);vertical-align:-6px;margin-right:10px}.settings-section-title span{font-size:12px;color:var(--sub);font-weight:800;letter-spacing:.05em}
 .club-guide{background:#EEF4FF;border-radius:16px;padding:14px 15px;color:#5E6D84;font-size:12px;line-height:1.6;margin-bottom:14px}.club-guide strong{color:var(--blue)}
 .club-edit-list{display:grid;gap:12px}
@@ -240,6 +244,7 @@ function nav(){return`<nav class="nav">
 function header(title,back='home',right=''){return`<header class="internal-header"><button class="header-btn" data-go="${back}">‹</button><div class="internal-title">${esc(title)}</div><div>${right}</div></header>`}
 function settingsHeader(back='home'){return`<header class="settings-fixed-header"><button class="settings-back" data-go="${back}">‹ 戻る</button><div class="settings-head-title">設定</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 function startHeader(){return`<header class="settings-fixed-header"><button class="settings-back" data-go="home">‹ 戻る</button><div class="settings-head-title">ラウンド開始</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
+function roundHeader(){return`<header class="round-fixed-header"><button class="round-back" data-go="home">‹ 戻る</button><div class="round-head-title"><span class="round">ラウンド</span><span class="record">記録</span></div><div class="round-head-actions"><button class="header-btn" data-action="memo">メモ</button><button class="header-btn" data-action="open-scorecard">スコアカード</button></div></header>`}
 const CLUB_TYPES=[['driver','ドライバー'],['fw','FW'],['ut','UT'],['iron','アイアン'],['wedge','ウェッジ'],['putter','パター'],['other','その他']];
 const CLUB_NAMES={driver:['Dr','MiniDr'],fw:['3W','5W','7W','9W'],ut:['2U','3U','4U','5U','6U','7U'],iron:['3I','4I','5I','6I','7I','8I','9I','P'],wedge:['42°','44°','46°','48°','50°','52°','54°','56°','58°','60°'],putter:['PT']};
 function clubTypeFromName(name){const v=String(name||'').trim();if(v==='Dr'||v==='MiniDr'||v==='1W')return'driver';if(/^\d+W$/i.test(v))return'fw';if(/^\d+U$/i.test(v))return'ut';if(/^(?:[3-9]I|P|PW)$/i.test(v))return'iron';if(/^\d{2}°$/.test(v))return'wedge';if(/^(?:PT|Putter|パター)$/i.test(v))return'putter';return'other'}
@@ -281,8 +286,7 @@ function start(){
  <button class="primary" data-action="start-round">この設定で開始</button></div>`}
 function play(){
  const r=currentRound(); if(!r)return home(); const h=currentHole(r); if(!h)return''; const done=h.status==='done';
- const right=`<div class="row" style="gap:2px;justify-content:flex-end"><button class="header-btn" data-action="memo">メモ</button><button class="header-btn" data-action="open-scorecard">表</button></div>`;
- return`${header('ラウンド記録','home',right)}<div class="page">
+ return`${roundHeader()}<div class="page">
  <div class="top-hole"><div class="hole-main"><div><span class="hole-id">${h.number}H</span> <span class="hole-meta">Par${h.par} · ${h.distance}yd</span></div>${done?`<div class="hole-result">${holeScore(h)} (${scoreLabel(holeScore(h)-h.par)}) · ${holePutts(h)} PUTT</div>`:`<div class="hole-meta">${h.stage==='putt'?`${h.currentPuttRemainingM??'—'}m`:`残り ${Math.round(h.currentRemainingY||0)}yd`}</div>`}</div>${!done?`<div class="tiny muted" style="margin-top:4px">${h.shots.length+1}打目</div>`:''}</div>
  ${h.shots.map((s,i)=>collapsedShot(s,i)).join('')}
  ${done?completedHoleView(r,h):h.stage==='putt'?puttInput(r,h):shotInput(r,h)}
