@@ -16,7 +16,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Hiragino Sans","Yu Gothic",Inter,Arial,sans-serif}
-body{min-height:100vh}
+body{min-height:100vh;overscroll-behavior-x:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 #app{width:100%;min-height:100vh}
@@ -137,6 +137,7 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&v.ve
 function mergeData(v){const s=defaultSettings();return{version:1,settings:{...s,...(v.settings||{}),inputs:{...s.inputs,...(v.settings?.inputs||{})},options:{...s.options,...(v.settings?.options||{})}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
 let ui={screen:'home',prev:'home',dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',section:'OUT / IN',tee:'Regular',weather:'晴',green:'A',holeCount:18},courseEditHalf:0,clubId:null};
+let lastRenderedScreen=ui.screen;
 function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
 function mutate(fn){fn();persist();render()}
 function toast(msg){ui.toast=msg;render();setTimeout(()=>{ui.toast='';render()},1500)}
@@ -169,7 +170,12 @@ function roundStats(r){
 function freq(arr,key,values){const out={};values.forEach(v=>out[v]=0);arr.forEach(x=>{const v=typeof key==='function'?key(x):x[key];if(v in out)out[v]++});return out}
 function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','settings-clubs','settings-input','settings-round','settings-data','club-detail'].includes(ui.screen);
+ const screenChanged=lastRenderedScreen!==ui.screen;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
+ if(screenChanged){
+   lastRenderedScreen=ui.screen;
+   requestAnimationFrame(()=>{window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0});
+ }
 }
 function route(){switch(ui.screen){case'home':return home();case'howto':return howto();case'start':return start();case'play':return play();case'scorecard':return scorecard();case'result':return result();case'shot-history':return shotHistory();case'history':return history();case'data':return dataPage();case'club-detail':return clubDetail();case'settings':return settings();case'settings-clubs':return settingsClubs();case'settings-input':return settingsInput();case'settings-round':return settingsRound();case'settings-data':return settingsData();default:return home()}}
 function nav(){return`<nav class="nav">
@@ -266,7 +272,7 @@ function scorecard(){
  </tbody></table></div>
  <div class="note" style="margin-top:14px">ホール番号をタップすると、そのホールのショットを確認できます。</div>${r!==data.activeRound?`<button class="primary" style="margin-top:14px" data-result-id="${r.id}">結果サマリーへ</button>`:''}</div>`}
 function result(){const r=roundById(ui.viewRoundId);if(!r)return'';const s=roundStats(r);const all=s.allShots;const dir=freq(all,x=>x.directionMode==='green'?mapGreenToLR(x.greenCell):x.direction,['左','中央','右']);const fl=freq(all,'flight',['ドロー','ストレート','フェード']);const good=all.filter(x=>x.quality==='Good').length,miss=all.filter(x=>x.quality==='ミス').length;const misses={};all.flatMap(x=>x.misses||[]).forEach(m=>misses[m]=(misses[m]||0)+1);const clubs={};all.forEach(x=>{if(x.club)clubs[x.club]=(clubs[x.club]||0)+1});const notes=r.holes.filter(h=>h.memo).map(h=>`${h.number}H  ${h.memo}`);
- return`${header('ラウンド結果','history')}<div class="page"><div class="brand small center"><span class="shot">Shot</span> <span class="log">log</span></div><div class="center tiny muted" style="margin:6px 0 16px">${esc(r.date)} · ${esc(r.courseName)} · ${esc(r.tee)}</div>
+ return`${header('ラウンド結果',ui.prev&&ui.prev!=='result'?ui.prev:'history')}<div class="page"><div class="brand small center"><span class="shot">Shot</span> <span class="log">log</span></div><div class="center tiny muted" style="margin:6px 0 16px">${esc(r.date)} · ${esc(r.courseName)} · ${esc(r.tee)}</div>
  <div class="card center"><div class="metric-label">TOTAL SCORE</div><div style="font-size:56px;font-weight:850;line-height:1.05;margin:6px 0;color:var(--orange)">${s.total}</div><div class="muted">${scoreLabel(s.diff)}</div><div class="grid3" style="margin-top:16px"><div><strong>${sum(r.holes.slice(0,9).map(h=>holeScore(h)||0))}</strong><div class="tiny muted">OUT</div></div><div><strong>${sum(r.holes.slice(9,18).map(h=>holeScore(h)||0))||'—'}</strong><div class="tiny muted">IN</div></div><div><strong>${s.putts}</strong><div class="tiny muted">PUTT</div></div></div></div>
  <div class="grid2"><div class="metric"><div class="metric-label">FWキープ率</div><div class="metric-value">${s.fw}%</div></div><div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${s.gir}%</div></div><div class="metric"><div class="metric-label">OB / Pen</div><div class="metric-value">${s.ob} / ${s.pen}</div></div><div class="metric"><div class="metric-label">Bunker</div><div class="metric-value">${s.bunker}</div></div></div>
  <div class="card"><div class="card-title">スコア分布</div>${distBars(s.scoreDist)}</div>
@@ -310,12 +316,12 @@ function saveCourseFields(){const c=data.courses.find(x=>x.id===ui.start.courseI
 function saveShot(skip=false){const r=currentRound(),h=currentHole(r),d=h.draft||shotDraft();const remEl=document.getElementById('remaining-after'),distEl=document.getElementById('direct-distance');if(remEl)d.remainingAfterY=remEl.value;if(distEl)d.directDistance=distEl.value;const before=Number(h.currentRemainingY||0),after=d.remainingAfterY===''?before:Number(d.remainingAfterY);const direct=Number(d.directDistance);const estimated=Math.max(0,before-after);const s={id:uid(),type:'shot',num:h.shots.length+1,club:skip?'':d.club,directionMode:d.directionMode,direction:skip?'':d.direction,greenCell:skip?'':d.greenCell,flight:skip?'':d.flight,quality:skip?'':d.quality,misses:skip?[]:[...d.misses],feel:d.feel,shotType:d.shotType,slope:d.slope,lie:d.lie,landing:skip?'':d.landing,remainingBeforeY:before,remainingAfterY:after,shotDistance:direct||estimated||null,estimatedDistance:!direct,penalty:skip?0:Number(d.penalty||0)};h.shots.push(s);if(d.remainingAfterY!=='')h.currentRemainingY=after;if(!skip&&d.landing==='Green'){h.stage='putt';h.currentRemainingY=0;h.currentPuttRemainingM=null}h.draft=shotDraft()}
 function savePutt(){const h=currentHole(),d=h.puttDraft;const cup=d.cell==='Cup-in';const after=cup?0:Number(d.afterM||0);h.shots.push({id:uid(),type:'putt',num:h.shots.length+1,puttBeforeM:Number(h.currentPuttRemainingM||0),puttAfterM:after,puttLie:[...d.lie],puttCell:d.cell});h.currentPuttRemainingM=after;h.puttDraft=puttDraft();if(cup)finalizeHole(h,holeComputedScore(h))}
 function finalizeHole(h,score){h.status='done';h.stage='done';h.score=Number(score);h.currentRemainingY=0;h.currentPuttRemainingM=0}
-function finishRound(){const r=currentRound();r.completedAt=new Date().toISOString();data.rounds.push(r);data.activeRound=null;ui.viewRoundId=r.id;ui.screen='result';persist();render()}
+function finishRound(){const r=currentRound();r.completedAt=new Date().toISOString();data.rounds.push(r);data.activeRound=null;ui.viewRoundId=r.id;ui.prev='home';ui.screen='result';persist();render()}
 function roundJson(r){return JSON.stringify({app:'Shot log',version:1,generatedAt:new Date().toISOString(),round:{id:r.id,date:r.date,courseName:r.courseName,section:r.section,tee:r.tee,weather:r.weather,green:r.green,holeCount:r.holeCount,stats:roundStats(r),holes:r.holes.map(h=>({number:h.number,par:h.par,distance:h.distance,pin:h.pin,memo:h.memo,score:holeScore(h),shots:h.shots}))}},null,2)}
 
 function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole-sheet],[data-club-detail],[data-edit-hole],[data-delete-shot]');if(!t)return;
- if(t.dataset.nav){ui.screen=t.dataset.nav;render();return} if(t.dataset.go){ui.prev=ui.screen;ui.screen=t.dataset.go;render();return}
- if(t.dataset.resultId){ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
+ if(t.dataset.nav){ui.prev=ui.screen;ui.screen=t.dataset.nav;render();return} if(t.dataset.go){ui.prev=ui.screen;ui.screen=t.dataset.go;render();return}
+ if(t.dataset.resultId){ui.prev=ui.screen;ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
  if(t.dataset.dataTab){ui.dataTab=t.dataset.dataTab;render();return}
  if(t.dataset.clubDetail){ui.clubId=t.dataset.clubDetail;ui.screen='club-detail';render();return}
  if(t.dataset.draft){mutate(()=>{const h=currentHole(),d=h.draft;if(t.dataset.draft==='penalty')d.penalty=Number(t.dataset.value);else d[t.dataset.draft]=t.dataset.value});return}
@@ -365,6 +371,41 @@ function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole
  else if(a==='confirm-clear'){localStorage.removeItem(KEY);data=seed();data.rounds=[];data.activeRound=null;ui.modal=null;ui.screen='home';persist();render();toast('データを削除しました')}
 }
 function onChange(e){const el=e.target;if(el.id==='start-course'){ui.start.courseId=el.value==='new'?'':el.value;render();return}if(el.classList.contains('hole-par')||el.classList.contains('hole-distance')){saveCourseFields();return}if(el.id==='remaining-after'||el.id==='direct-distance'){const h=currentHole();if(!h)return;if(el.id==='remaining-after')h.draft.remainingAfterY=el.value;else h.draft.directDistance=el.value;persist();return}}
+
+function backTarget(){
+ if(ui.screen==='home')return null;
+ if(ui.screen==='result')return ui.prev&&ui.prev!=='result'?ui.prev:'history';
+ if(ui.screen==='scorecard')return ui.prev&&ui.prev!=='scorecard'?ui.prev:(data.activeRound?.id===ui.scorecardRoundId?'play':'result');
+ const map={howto:'home',start:'home',play:'home',history:'home',data:'home',settings:'home','settings-clubs':'settings','settings-input':'settings','settings-round':'settings','settings-data':'settings','club-detail':'data','shot-history':'result'};
+ return map[ui.screen]||'home';
+}
+function swipeBack(){
+ if(ui.modal){ui.modal=null;render();return}
+ const target=backTarget();if(!target)return;
+ ui.prev=ui.screen;ui.screen=target;render();
+}
+let edgeSwipe=null;
+document.addEventListener('touchstart',e=>{
+ if(e.touches.length!==1)return;
+ const p=e.touches[0];
+ if(p.clientX<=24)edgeSwipe={x:p.clientX,y:p.clientY,t:Date.now(),horizontal:false};
+ else edgeSwipe=null;
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+ if(!edgeSwipe||e.touches.length!==1)return;
+ const p=e.touches[0],dx=p.clientX-edgeSwipe.x,dy=p.clientY-edgeSwipe.y;
+ if(!edgeSwipe.horizontal&&dx>14&&Math.abs(dx)>Math.abs(dy)*1.25)edgeSwipe.horizontal=true;
+ if(edgeSwipe.horizontal&&dx>0)e.preventDefault();
+},{passive:false});
+document.addEventListener('touchend',e=>{
+ if(!edgeSwipe)return;
+ const p=e.changedTouches[0],dx=p.clientX-edgeSwipe.x,dy=p.clientY-edgeSwipe.y,dt=Date.now()-edgeSwipe.t;
+ const ok=edgeSwipe.horizontal&&dx>=72&&Math.abs(dy)<=70&&dt<=900;
+ edgeSwipe=null;
+ if(ok)swipeBack();
+},{passive:true});
+document.addEventListener('touchcancel',()=>{edgeSwipe=null},{passive:true});
+
 document.addEventListener('click',onClick);document.addEventListener('change',onChange);
 render();
 })();
