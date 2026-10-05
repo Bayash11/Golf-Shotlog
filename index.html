@@ -37,10 +37,11 @@ button{cursor:pointer}
 .settings-back{border:0;background:transparent;padding:0;min-height:44px;text-align:left;font-size:14px;font-weight:750;color:var(--text)}
 .settings-head-title{text-align:center;font-size:17px;font-weight:800}
 .settings-head-logo{justify-self:end;white-space:nowrap;font-size:16px;font-weight:850;letter-spacing:-.6px}.settings-head-logo .shot{color:#202635}.settings-head-logo .log{color:var(--orange)}
-.round-sticky-stack{position:sticky;top:0;z-index:45;background:rgba(248,250,252,.98);backdrop-filter:blur(12px);border-bottom:1px solid rgba(221,227,234,.9)}
+.round-screen{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:30;width:100%;max-width:430px;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.round-sticky-stack{position:relative;flex:0 0 auto;z-index:45;background:rgba(248,250,252,.98);backdrop-filter:blur(12px);border-bottom:1px solid rgba(221,227,234,.9)}
 .round-fixed-header{position:relative;z-index:2;min-height:64px;padding:calc(5px + env(safe-area-inset-top)) 12px 7px;background:transparent;border-bottom:0;display:grid;grid-template-columns:74px 1fr auto;align-items:center;gap:8px}
 .round-hole-wrap{padding:8px 16px 10px;background:transparent}
-.round-play-body{padding-top:12px}
+.round-play-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scroll-behavior:auto;padding-top:12px;padding-bottom:calc(28px + env(safe-area-inset-bottom));overflow-anchor:none}
 .round-back{border:0;background:transparent;padding:0;min-height:44px;text-align:left;font-size:14px;font-weight:750;color:var(--text)}
 .round-head-title{justify-self:center;white-space:nowrap;font-size:18px;font-weight:850;letter-spacing:-.6px}.round-head-title .round{color:#202635}.round-head-title .record{color:var(--orange)}
 .round-head-actions{display:flex;align-items:center;gap:4px;justify-self:end}.round-head-actions .header-btn{min-width:auto;padding:0 8px;font-size:12px;font-weight:750}
@@ -264,7 +265,7 @@ function freq(arr,key,values){const out={};values.forEach(v=>out[v]=0);arr.forEa
 let topResetToken=0;
 function resetViewportTop(){
  const token=++topResetToken;
- const go=()=>{if(token!==topResetToken)return;try{document.activeElement?.blur?.()}catch(e){}window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;const shell=document.querySelector('.shell');if(shell)shell.scrollTop=0};
+ const go=()=>{if(token!==topResetToken)return;try{document.activeElement?.blur?.()}catch(e){}window.scrollTo({top:0,left:0,behavior:'auto'});const scroller=document.scrollingElement;if(scroller)scroller.scrollTop=0;document.documentElement.scrollTop=0;document.body.scrollTop=0;const shell=document.querySelector('.shell');if(shell)shell.scrollTop=0;const playBody=document.querySelector('.round-play-body');if(playBody)playBody.scrollTop=0};
  go();
  requestAnimationFrame(()=>{go();requestAnimationFrame(go)});
  [60,180,350,600,900].forEach(ms=>setTimeout(go,ms));
@@ -276,10 +277,13 @@ function resetViewportTop(){
 }
 function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','club-detail'].includes(ui.screen);
+ const previousPlayScroll=document.querySelector('.round-play-body')?.scrollTop||0;
  const screenChanged=lastRenderedScreen!==ui.screen;
- const pageKey=[ui.screen,data.activeRound?.id||'',data.activeRound?.currentHoleIndex??'',currentHole()?.shots?.length??'',currentHole()?.stage||'',ui.viewRoundId||'',ui.scorecardRoundId||'',ui.clubId||''].join('|');
+ const pageKey=[ui.screen,data.activeRound?.id||'',data.activeRound?.currentHoleIndex??'',currentHole()?.shots?.length??'',currentHole()?.stage||'',currentHole()?.currentPuttRemainingM??'',ui.viewRoundId||'',ui.scorecardRoundId||'',ui.clubId||''].join('|');
  const pageChanged=lastRenderedPageKey!==pageKey;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
+ const playBody=document.querySelector('.round-play-body');
+ if(playBody&&!pageChanged)playBody.scrollTop=previousPlayScroll;
  root.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','none');el.setAttribute('spellcheck','false')});
  if(!historyReady){
    history.replaceState(historyState(),'');
@@ -345,10 +349,10 @@ function start(){
 function play(){
  const r=currentRound(); if(!r)return home(); const h=currentHole(r); if(!h)return''; const done=h.status==='done';
  const holeCard=`<div class="top-hole"><div class="hole-main"><div><span class="hole-id">${h.number}H</span><button class="hole-info-edit" data-action="edit-hole-info">Par${h.par} · ${h.distance}yd <span class="hole-edit-mark">✎</span></button></div>${done?`<div class="hole-result">${holeScore(h)} (${scoreLabel(holeScore(h)-h.par)}) · ${holePutts(h)} PUTT</div>`:`<div class="hole-remaining">${h.stage==='putt'?`${h.currentPuttRemainingM??'—'}m`:`残り ${Math.round(h.currentRemainingY||0)}yd`}</div>`}</div>${!done?`<div class="tiny muted" style="margin-top:4px">${h.shots.length+1}打目</div>`:''}</div>`;
- return`<div class="round-sticky-stack">${roundHeader()}<div class="round-hole-wrap">${holeCard}</div></div><div class="page round-play-body">
+ return`<div class="round-screen"><div class="round-sticky-stack">${roundHeader()}<div class="round-hole-wrap">${holeCard}</div></div><div class="page round-play-body">
  ${h.shots.map((s,i)=>collapsedShot(s,i,h)).join('')}
  ${done?completedHoleView(r,h):h.stage==='putt'?puttInput(r,h):shotInput(r,h)}
- </div>`}
+ </div></div>`}
 function collapsedShot(s,i,h){
  const del='<button class="shot-delete-x" data-action="delete-current-shot" data-shot-index="'+i+'" aria-label="'+(i+1)+'打目を削除">×</button>';
  if(s.type==='putt'){
