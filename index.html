@@ -283,7 +283,15 @@ function render(){
  const pageChanged=lastRenderedPageKey!==pageKey;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
  const playBody=document.querySelector('.round-play-body');
- if(playBody&&!pageChanged)playBody.scrollTop=previousPlayScroll;
+ if(playBody&&!pageChanged){
+   // A normal button selection inside the same shot must keep its current scroll position.
+   // Also invalidate delayed top-reset callbacks that were scheduled by the previous shot transition.
+   topResetToken++;
+   const restore=()=>{if(document.body.contains(playBody))playBody.scrollTop=previousPlayScroll};
+   restore();
+   requestAnimationFrame(()=>{restore();requestAnimationFrame(restore)});
+   setTimeout(restore,60);
+ }
  root.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','none');el.setAttribute('spellcheck','false')});
  if(!historyReady){
    history.replaceState(historyState(),'');
