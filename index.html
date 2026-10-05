@@ -258,9 +258,18 @@ function roundStats(r){
  return{holes:done.length,total,par,diff:total-par,putts,fwN,fwD,fw:pct(fwN,fwD),girN,girD,gir:pct(girN,girD),ob,pen,bunker,allShots,scoreDist};
 }
 function freq(arr,key,values){const out={};values.forEach(v=>out[v]=0);arr.forEach(x=>{const v=typeof key==='function'?key(x):x[key];if(v in out)out[v]++});return out}
+let topResetToken=0;
 function resetViewportTop(){
- const go=()=>{try{document.activeElement?.blur?.()}catch(e){}window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;const shell=document.querySelector('.shell');if(shell)shell.scrollTop=0};
- go();requestAnimationFrame(go);setTimeout(go,60);setTimeout(go,180);
+ const token=++topResetToken;
+ const go=()=>{if(token!==topResetToken)return;try{document.activeElement?.blur?.()}catch(e){}window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;const shell=document.querySelector('.shell');if(shell)shell.scrollTop=0};
+ go();
+ requestAnimationFrame(()=>{go();requestAnimationFrame(go)});
+ [60,180,350,600,900].forEach(ms=>setTimeout(go,ms));
+ if(window.visualViewport){
+   const onResize=()=>{go();setTimeout(go,80)};
+   window.visualViewport.addEventListener('resize',onResize,{passive:true});
+   setTimeout(()=>window.visualViewport.removeEventListener('resize',onResize),1200);
+ }
 }
 function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','club-detail'].includes(ui.screen);
@@ -536,12 +545,12 @@ function onClick(e){
  if(t.dataset.toggleInput){mutate(()=>{const k=t.dataset.toggleInput;data.settings.inputs[k]=!data.settings.inputs[k]});return}
  const a=t.dataset.action;
  if(a==='new-round'){ui.screen='start';render()}
- else if(a==='resume-round'){ui.screen='play';render()}
+ else if(a==='resume-round'){ui.screen='play';render();resetViewportTop()}
  else if(a==='discard-active-round'){if(data.activeRound){ui.modal={type:'confirmDiscardRound'};render()}}
  else if(a==='open-recent-data'){ui.dataTab='recent';ui.screen='data';render()}
  else if(a==='shot-history'){ui.viewRoundId=t.dataset.id;ui.scorecardRoundId=t.dataset.id;ui.prev='result';ui.screen='shot-history';render()}
  else if(a==='course-half'){readStartForm();saveCourseFields();ui.courseEditHalf=Number(t.dataset.value);render()}
- else if(a==='start-round'){readStartForm();saveCourseFields();mutate(()=>{data.activeRound=createRoundFromStart();ui.screen='play'})}
+ else if(a==='start-round'){readStartForm();saveCourseFields();try{document.activeElement?.blur?.()}catch(e){}mutate(()=>{data.activeRound=createRoundFromStart();ui.screen='play'});resetViewportTop()}
  else if(a==='edit-hole-info'){if(currentHole()){ui.modal={type:'holeInfoEdit',par:Number(currentHole().par)};render()}}
  else if(a==='set-hole-par'){if(ui.modal?.type==='holeInfoEdit'){ui.modal.par=Number(t.dataset.value);render()}}
  else if(a==='save-hole-info'){const h=currentHole();if(h){const par=clamp(Number(ui.modal?.par||h.par),3,6),distance=clamp(Math.round(Number(document.getElementById('edit-hole-distance')?.value||h.distance)),1,999),untouched=(h.shots||[]).length===0&&h.stage!=='putt';mutate(()=>{h.par=par;h.distance=distance;if(untouched)h.currentRemainingY=distance;ui.modal=null});toast('ホール情報を修正しました')}}
