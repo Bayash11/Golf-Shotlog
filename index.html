@@ -187,7 +187,30 @@ function applyHistoryState(s){
 }
 function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
 function mutate(fn){fn();persist();render()}
-function toast(msg){ui.toast=msg;render();setTimeout(()=>{ui.toast='';render()},1500)}
+function syncLiveShotButtons(){
+ const h=currentHole(),d=h?.draft;if(!d)return;
+ document.querySelectorAll('[data-draft]').forEach(btn=>{
+   const k=btn.dataset.draft,v=btn.dataset.value;
+   if(k==='penalty')btn.classList.toggle('active',Number(d.penalty)===Number(v));
+   else btn.classList.toggle('active',d[k]===v);
+ });
+ document.querySelectorAll('[data-feel]').forEach(btn=>btn.classList.toggle('active',feelArray(d.feel).includes(btn.dataset.feel)));
+ document.querySelectorAll('[data-slope]').forEach(btn=>btn.classList.toggle('active',slopeArray(d.slope).includes(btn.dataset.slope)));
+ document.querySelectorAll('[data-draft-good]').forEach(btn=>btn.classList.toggle('active',(d.goods||[]).includes(btn.dataset.draftGood)));
+ document.querySelectorAll('[data-draft-miss]').forEach(btn=>btn.classList.toggle('active',(d.misses||[]).includes(btn.dataset.draftMiss)));
+}
+function mutateShotDraftInPlace(fn){fn();persist();syncLiveShotButtons()}
+function renderKeepPlayScroll(){
+ const scroller=document.querySelector('.round-play-body'),y=scroller?.scrollTop||0;
+ render();
+ const restore=()=>{const el=document.querySelector('.round-play-body');if(el)el.scrollTop=y};
+ restore();requestAnimationFrame(()=>{restore();requestAnimationFrame(restore)});[60,180,350].forEach(ms=>setTimeout(restore,ms));
+}
+function toast(msg){
+ ui.toast=msg;
+ if(ui.screen==='play')renderKeepPlayScroll();else render();
+ setTimeout(()=>{ui.toast='';if(ui.screen==='play')renderKeepPlayScroll();else render()},1500)
+}
 function enabledShotStyles(){return (data.settings.shotStyles||[]).filter(x=>x.enabled===true).map(x=>x.label)}
 function enabledFeedback(type){return (data.settings.feedback?.[type]||[]).filter(x=>x.enabled===true).map(x=>x.label)}
 function shotHasGood(s){return (Array.isArray(s.goods)&&s.goods.length>0)||s.quality==='Good'}
@@ -539,11 +562,19 @@ function onClick(e){
  if(t.dataset.editPuttAfter&&ui.modal?.type==='editShot'){ui.modal.draft.afterM=Number(t.dataset.editPuttAfter);render();return}
  if(t.dataset.editFeel&&ui.modal?.type==='editShot'){ui.modal.draft.feel=toggleFeel(ui.modal.draft.feel,t.dataset.editFeel);render();return}
  if(t.dataset.editSlope&&ui.modal?.type==='editShot'){ui.modal.draft.slope=toggleSlope(ui.modal.draft.slope,t.dataset.editSlope);render();return}
- if(t.dataset.feel){mutate(()=>{const d=currentHole().draft;d.feel=toggleFeel(d.feel,t.dataset.feel)});return}
- if(t.dataset.slope){mutate(()=>{const d=currentHole().draft;d.slope=toggleSlope(d.slope,t.dataset.slope)});return}
- if(t.dataset.draft){mutate(()=>toggleSimpleDraftField(currentHole().draft,t.dataset.draft,t.dataset.value));return}
- if(t.dataset.draftGood){mutate(()=>{const d=currentHole().draft;d.goods=toggleArrayValue(d.goods,t.dataset.draftGood)});return}
- if(t.dataset.draftMiss){mutate(()=>{const d=currentHole().draft;d.misses=toggleArrayValue(d.misses,t.dataset.draftMiss)});return}
+ if(t.dataset.feel){mutateShotDraftInPlace(()=>{const d=currentHole().draft;d.feel=toggleFeel(d.feel,t.dataset.feel)});return}
+ if(t.dataset.slope){mutateShotDraftInPlace(()=>{const d=currentHole().draft;d.slope=toggleSlope(d.slope,t.dataset.slope)});return}
+ if(t.dataset.draft){
+   const k=t.dataset.draft;
+   if(k==='directionMode'||k==='landing'){
+     toggleSimpleDraftField(currentHole().draft,k,t.dataset.value);persist();renderKeepPlayScroll();
+   }else{
+     mutateShotDraftInPlace(()=>toggleSimpleDraftField(currentHole().draft,k,t.dataset.value));
+   }
+   return
+ }
+ if(t.dataset.draftGood){mutateShotDraftInPlace(()=>{const d=currentHole().draft;d.goods=toggleArrayValue(d.goods,t.dataset.draftGood)});return}
+ if(t.dataset.draftMiss){mutateShotDraftInPlace(()=>{const d=currentHole().draft;d.misses=toggleArrayValue(d.misses,t.dataset.draftMiss)});return}
  if(t.dataset.styleToggle&&ui.styleDraft){const x=ui.styleDraft.find(v=>v.id===t.dataset.styleToggle);if(x)x.enabled=!x.enabled;render();return}
  if(t.dataset.styleDelete&&ui.styleDraft){ui.styleDraft=ui.styleDraft.filter(v=>v.id!==t.dataset.styleDelete);render();return}
  if(t.dataset.feedbackTab){ui.feedbackTab=t.dataset.feedbackTab;render();return}
