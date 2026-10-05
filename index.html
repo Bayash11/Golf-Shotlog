@@ -99,7 +99,7 @@ button{cursor:pointer}
 .chart{width:100%;height:auto;display:block}.chart text{font-family:inherit}.chart-grid{stroke:#E8EDF3;stroke-width:1}.chart-axis{stroke:#C9D1DC;stroke-width:1}.chart-orange{fill:var(--orange);stroke:var(--orange)}.chart-blue{fill:var(--blue);stroke:var(--blue)}
 .tabline{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}.tabline button{border:0;background:#fff;min-height:44px;font-size:12px;font-weight:700;color:var(--sub)}.tabline button.active{background:var(--orange);color:#fff}
 .setting-row{display:flex;align-items:center;justify-content:space-between;min-height:54px;border-bottom:1px solid #EEF1F4;gap:12px}.setting-row:last-child{border-bottom:0}.switch{width:48px;height:28px;border-radius:999px;background:#D9DEE6;padding:3px;border:0;position:relative;flex:0 0 auto}.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.14);transition:.18s}.switch.on{background:var(--orange)}.switch.on::after{left:23px}
-.modal-back{position:fixed;inset:0;background:rgba(18,25,38,.38);z-index:100;display:flex;align-items:flex-end;justify-content:center}.sheet{width:100%;max-width:430px;max-height:88vh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:12px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -14px 44px rgba(0,0,0,.15)}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CED5DE;margin:2px auto 14px}.modal-card{width:calc(100% - 32px);max-width:398px;background:#fff;border-radius:20px;padding:18px;box-shadow:0 18px 54px rgba(0,0,0,.20);align-self:center}
+.modal-back{position:fixed;inset:0;background:rgba(18,25,38,.38);z-index:100;display:flex;align-items:flex-end;justify-content:center}.sheet{width:100%;max-width:430px;max-height:88vh;overflow:auto;overscroll-behavior:contain;background:var(--bg);border-radius:22px 22px 0 0;padding:12px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -14px 44px rgba(0,0,0,.15);will-change:transform}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CED5DE;margin:2px auto 14px}.modal-card{width:calc(100% - 32px);max-width:398px;background:#fff;border-radius:20px;padding:18px;box-shadow:0 18px 54px rgba(0,0,0,.20);align-self:center}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#172033;color:#fff;border-radius:999px;padding:10px 16px;font-size:12px;font-weight:700;z-index:150;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .empty{padding:34px 16px;text-align:center;color:var(--sub);font-size:13px}
 .code-preview{width:100%;min-height:300px;max-height:55vh;overflow:auto;background:#111827;color:#D1D5DB;border-radius:14px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
@@ -420,7 +420,9 @@ function finalizeHole(h,score){h.status='done';h.stage='done';h.score=Number(sco
 function finishRound(){const r=currentRound();r.completedAt=new Date().toISOString();data.rounds.push(r);data.activeRound=null;ui.viewRoundId=r.id;ui.prev='home';ui.screen='result';persist();render()}
 function roundJson(r){return JSON.stringify({app:'Shot log',version:1,generatedAt:new Date().toISOString(),round:{id:r.id,date:r.date,courseName:r.courseName,section:r.section,sections:r.sections||['OUT','IN'],tee:r.tee,weather:r.weather,green:r.green,holeCount:r.holeCount,stats:roundStats(r),holes:r.holes.map(h=>({number:h.number,par:h.par,distance:h.distance,pin:h.pin,memo:h.memo,score:holeScore(h),shots:h.shots}))}},null,2)}
 
-function onClick(e){const t=e.target.closest('button,[data-result-id],[data-hole-sheet],[data-club-detail],[data-edit-hole],[data-delete-shot],[data-club-move-draft],[data-club-delete-draft]');if(!t)return;
+function onClick(e){
+ if(e.target.classList?.contains('modal-back')){ui.modal=null;render();return}
+ const t=e.target.closest('button,[data-result-id],[data-hole-sheet],[data-club-detail],[data-edit-hole],[data-delete-shot],[data-club-move-draft],[data-club-delete-draft]');if(!t)return;
  if(t.dataset.nav){ui.prev=ui.screen;ui.screen=t.dataset.nav;render();return} if(t.dataset.go){ui.prev=ui.screen;if(t.dataset.go==='settings-clubs')ui.clubDraft=clubDraftRows();if(t.dataset.go==='settings-styles')ui.styleDraft=JSON.parse(JSON.stringify(data.settings.shotStyles||[]));if(t.dataset.go==='settings-feedback'){ui.feedbackDraft=JSON.parse(JSON.stringify(data.settings.feedback||{good:[],miss:[]}));ui.feedbackTab='good'}ui.screen=t.dataset.go;render();return}
  if(t.dataset.resultId){ui.prev=ui.screen;ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
  if(t.dataset.dataTab){ui.dataTab=t.dataset.dataTab;render();return}
@@ -533,25 +535,57 @@ let edgeSwipe=null;
 document.addEventListener('touchstart',e=>{
  if(e.touches.length!==1)return;
  const p=e.touches[0];
- // 画面の完全な端はiOS Safariのネイティブ戻るジェスチャーに任せ、
- // 少し内側（20〜64px）もアプリ側の予備ジェスチャーとして受ける。
- if(p.clientX>=20&&p.clientX<=64)edgeSwipe={x:p.clientX,y:p.clientY,t:Date.now(),horizontal:false};
+ // iPhoneで拾いやすいよう、画面左端〜80pxを戻るジェスチャー領域にする。
+ // ボトムシート表示中はシート側の下スワイプを優先する。
+ if(!document.querySelector('.sheet')&&p.clientX<=80)edgeSwipe={x:p.clientX,y:p.clientY,t:Date.now(),horizontal:false};
  else edgeSwipe=null;
 },{passive:true,capture:true});
 document.addEventListener('touchmove',e=>{
  if(!edgeSwipe||e.touches.length!==1)return;
  const p=e.touches[0],dx=p.clientX-edgeSwipe.x,dy=p.clientY-edgeSwipe.y;
- if(!edgeSwipe.horizontal&&dx>10&&Math.abs(dx)>Math.abs(dy)*1.2)edgeSwipe.horizontal=true;
+ if(!edgeSwipe.horizontal&&dx>8&&Math.abs(dx)>Math.abs(dy)*1.05)edgeSwipe.horizontal=true;
  if(edgeSwipe.horizontal&&dx>0)e.preventDefault();
 },{passive:false,capture:true});
 document.addEventListener('touchend',e=>{
  if(!edgeSwipe)return;
  const p=e.changedTouches[0],dx=p.clientX-edgeSwipe.x,dy=p.clientY-edgeSwipe.y,dt=Date.now()-edgeSwipe.t;
- const ok=edgeSwipe.horizontal&&dx>=55&&Math.abs(dy)<=80&&dt<=1000;
+ const ok=edgeSwipe.horizontal&&dx>=42&&Math.abs(dy)<=100&&dt<=1200;
  edgeSwipe=null;
  if(ok)swipeBack();
 },{passive:true,capture:true});
 document.addEventListener('touchcancel',()=>{edgeSwipe=null},{passive:true,capture:true});
+
+// ボトムシートは、シート最上部で下方向へスワイプすると閉じる。
+// シート内部の通常スクロールを邪魔しないよう、scrollTop=0のときだけ反応する。
+let sheetSwipe=null;
+document.addEventListener('touchstart',e=>{
+ const sheet=e.target.closest?.('.sheet');
+ if(!sheet||e.touches.length!==1||sheet.scrollTop>0){sheetSwipe=null;return}
+ const p=e.touches[0];
+ sheetSwipe={sheet,x:p.clientX,y:p.clientY,lastY:p.clientY,t:Date.now(),dragging:false};
+},{passive:true,capture:true});
+document.addEventListener('touchmove',e=>{
+ if(!sheetSwipe||e.touches.length!==1)return;
+ const p=e.touches[0],dx=p.clientX-sheetSwipe.x,dy=p.clientY-sheetSwipe.y;
+ sheetSwipe.lastY=p.clientY;
+ if(!sheetSwipe.dragging&&dy>10&&Math.abs(dy)>Math.abs(dx)*1.15)sheetSwipe.dragging=true;
+ if(sheetSwipe.dragging&&dy>0){
+   e.preventDefault();
+   sheetSwipe.sheet.style.transform=`translateY(${Math.min(dy,140)}px)`;
+ }
+},{passive:false,capture:true});
+document.addEventListener('touchend',e=>{
+ if(!sheetSwipe)return;
+ const p=e.changedTouches[0],dy=p.clientY-sheetSwipe.y,dx=p.clientX-sheetSwipe.x,dt=Date.now()-sheetSwipe.t;
+ const sheet=sheetSwipe.sheet,close=sheetSwipe.dragging&&dy>=60&&Math.abs(dx)<=120&&dt<=1200;
+ sheet.style.transform='';
+ sheetSwipe=null;
+ if(close&&ui.modal){ui.modal=null;render()}
+},{passive:true,capture:true});
+document.addEventListener('touchcancel',()=>{
+ if(sheetSwipe?.sheet)sheetSwipe.sheet.style.transform='';
+ sheetSwipe=null;
+},{passive:true,capture:true});
 
 function onInput(e){const el=e.target;
  if(el.id==='start-course-name')ui.start.courseName=el.value;
