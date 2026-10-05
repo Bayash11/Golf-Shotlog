@@ -191,7 +191,7 @@ function shotHasMiss(s){return (Array.isArray(s.misses)&&s.misses.length>0)||s.q
 const FEEL_PRIMARY=['良い','普通','悪い'];
 const FEEL_SECONDARY=['上目','下目','ヒール','トゥ'];
 function feelArray(v){if(Array.isArray(v))return [...v];if(!v)return[];return [v]}
-function toggleFeel(list,value){let arr=feelArray(list);if(FEEL_PRIMARY.includes(value)){arr=arr.filter(x=>!FEEL_PRIMARY.includes(x));arr.push(value)}else{arr=arr.includes(value)?arr.filter(x=>x!==value):[...arr,value]}return arr}
+function toggleFeel(list,value){let arr=feelArray(list);if(FEEL_PRIMARY.includes(value)){const already=arr.includes(value);arr=arr.filter(x=>!FEEL_PRIMARY.includes(x));if(!already)arr.push(value)}else{arr=arr.includes(value)?arr.filter(x=>x!==value):[...arr,value]}return arr}
 function feelText(v){return feelArray(v).join('・')}
 function shotDraft(){return{club:'',directionMode:'normal',direction:'中央',greenCell:'中央',flight:'ストレート',goods:[],misses:[],quality:'',landing:'FW',remainingAfterY:'',directDistance:'',feel:[],shotType:'',slope:'',lie:'',penalty:0}}
 function puttLieLabel(v){return({'Flat':'フラット','Uphill':'上り','Downhill':'下り','Hook':'フック','Slice':'スライス'}[v]||v)}
@@ -489,15 +489,15 @@ function onClick(e){
  if(t.dataset.resultId){ui.prev=ui.screen;ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
  if(t.dataset.dataTab){ui.dataTab=t.dataset.dataTab;render();return}
  if(t.dataset.clubDetail){ui.clubId=t.dataset.clubDetail;ui.screen='club-detail';render();return}
- if(t.dataset.editField&&ui.modal?.type==='editShot'){const k=t.dataset.editField;ui.modal.draft[k]=k==='penalty'?Number(t.dataset.value):t.dataset.value;render();return}
+ if(t.dataset.editField&&ui.modal?.type==='editShot'){const k=t.dataset.editField,v=t.dataset.value,d=ui.modal.draft;if(k==='directionMode')d[k]=v;else if(k==='penalty'){const n=Number(v);d.penalty=Number(d.penalty)===n?0:n}else d[k]=d[k]===v?'':v;render();return}
  if(t.dataset.editGood&&ui.modal?.type==='editShot'){const v=t.dataset.editGood,d=ui.modal.draft;d.goods=d.goods.includes(v)?d.goods.filter(x=>x!==v):[...d.goods,v];render();return}
  if(t.dataset.editMiss&&ui.modal?.type==='editShot'){const v=t.dataset.editMiss,d=ui.modal.draft;d.misses=d.misses.includes(v)?d.misses.filter(x=>x!==v):[...d.misses,v];render();return}
- if(t.dataset.editPuttLie&&ui.modal?.type==='editShot'){const v=t.dataset.editPuttLie,d=ui.modal.draft;if(v==='フラット')d.lie=['フラット'];else{d.lie=d.lie.filter(x=>x!=='フラット');d.lie=d.lie.includes(v)?d.lie.filter(x=>x!==v):[...d.lie,v];if(!d.lie.length)d.lie=['フラット']}render();return}
- if(t.dataset.editPuttCell&&ui.modal?.type==='editShot'){ui.modal.draft.cell=t.dataset.editPuttCell;render();return}
+ if(t.dataset.editPuttLie&&ui.modal?.type==='editShot'){const v=t.dataset.editPuttLie,d=ui.modal.draft;d.lie=d.lie||[];if(v==='フラット'){d.lie=d.lie.includes('フラット')?[]:['フラット']}else{d.lie=d.lie.filter(x=>x!=='フラット');d.lie=d.lie.includes(v)?d.lie.filter(x=>x!==v):[...d.lie,v]}render();return}
+ if(t.dataset.editPuttCell&&ui.modal?.type==='editShot'){const d=ui.modal.draft,v=t.dataset.editPuttCell;d.cell=d.cell===v?'':v;render();return}
  if(t.dataset.editPuttAfter&&ui.modal?.type==='editShot'){ui.modal.draft.afterM=Number(t.dataset.editPuttAfter);render();return}
  if(t.dataset.editFeel&&ui.modal?.type==='editShot'){ui.modal.draft.feel=toggleFeel(ui.modal.draft.feel,t.dataset.editFeel);render();return}
  if(t.dataset.feel){mutate(()=>{const d=currentHole().draft;d.feel=toggleFeel(d.feel,t.dataset.feel)});return}
- if(t.dataset.draft){mutate(()=>{const h=currentHole(),d=h.draft;if(t.dataset.draft==='penalty')d.penalty=Number(t.dataset.value);else d[t.dataset.draft]=t.dataset.value});return}
+ if(t.dataset.draft){mutate(()=>{const h=currentHole(),d=h.draft,k=t.dataset.draft,v=t.dataset.value;if(k==='directionMode')d[k]=v;else if(k==='penalty'){const n=Number(v);d.penalty=Number(d.penalty)===n?0:n}else d[k]=d[k]===v?'':v});return}
  if(t.dataset.draftGood){mutate(()=>{const d=currentHole().draft,v=t.dataset.draftGood;d.goods=d.goods.includes(v)?d.goods.filter(x=>x!==v):[...d.goods,v]});return}
  if(t.dataset.draftMiss){mutate(()=>{const d=currentHole().draft,v=t.dataset.draftMiss;d.misses=d.misses.includes(v)?d.misses.filter(x=>x!==v):[...d.misses,v]});return}
  if(t.dataset.styleToggle&&ui.styleDraft){const x=ui.styleDraft.find(v=>v.id===t.dataset.styleToggle);if(x)x.enabled=!x.enabled;render();return}
@@ -505,8 +505,8 @@ function onClick(e){
  if(t.dataset.feedbackTab){ui.feedbackTab=t.dataset.feedbackTab;render();return}
  if(t.dataset.feedbackToggle&&ui.feedbackDraft){const list=ui.feedbackDraft[t.dataset.feedbackType]||[],x=list.find(v=>v.id===t.dataset.feedbackToggle);if(x)x.enabled=!x.enabled;render();return}
  if(t.dataset.feedbackDelete&&ui.feedbackDraft){const type=t.dataset.feedbackType;ui.feedbackDraft[type]=(ui.feedbackDraft[type]||[]).filter(v=>v.id!==t.dataset.feedbackDelete);render();return}
- if(t.dataset.puttLie){mutate(()=>{const d=currentHole().puttDraft,v=t.dataset.puttLie;d.lie=(d.lie||['フラット']).map(puttLieLabel);if(v==='フラット')d.lie=['フラット'];else{d.lie=d.lie.filter(x=>x!=='フラット');d.lie=d.lie.includes(v)?d.lie.filter(x=>x!==v):[...d.lie,v];if(!d.lie.length)d.lie=['フラット']}});return}
- if(t.dataset.puttCell){mutate(()=>{currentHole().puttDraft.cell=t.dataset.puttCell});return}
+ if(t.dataset.puttLie){mutate(()=>{const d=currentHole().puttDraft,v=t.dataset.puttLie;d.lie=(d.lie||[]).map(puttLieLabel);if(v==='フラット'){d.lie=d.lie.includes('フラット')?[]:['フラット']}else{d.lie=d.lie.filter(x=>x!=='フラット');d.lie=d.lie.includes(v)?d.lie.filter(x=>x!==v):[...d.lie,v]}});return}
+ if(t.dataset.puttCell){mutate(()=>{const d=currentHole().puttDraft,v=t.dataset.puttCell;d.cell=d.cell===v?'':v});return}
  if(t.dataset.puttAfter){mutate(()=>{currentHole().puttDraft.afterM=Number(t.dataset.puttAfter)});return}
  if(t.dataset.holeSheet){const r=roundById(ui.scorecardRoundId)||currentRound();ui.modal={type:'holeSheet',roundId:r.id,hole:Number(t.dataset.holeSheet)};render();return}
  if(t.dataset.editHole){const r=currentRound(),idx=r.holes.findIndex(h=>h.number===Number(t.dataset.editHole));if(idx>=0)mutate(()=>{const h=r.holes[idx];h.status='open';h.score=null;h.stage=h.shots.some(s=>s.type==='putt')?'putt':'shot';r.currentHoleIndex=idx;ui.modal=null;ui.screen='play'});return}
