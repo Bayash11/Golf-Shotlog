@@ -217,7 +217,42 @@ function syncLivePuttControls(){
  if(save)save.textContent=d.cell==='Cup-in'?'Cup-in・ホールアウト':'パットを記録';
 }
 function mutatePuttDraftInPlace(fn){fn();persist();syncLivePuttControls()}
-function toast(msg){ui.toast=msg;render();setTimeout(()=>{ui.toast='';render()},1500)}
+let toastTimer=null;
+function toast(msg){
+ ui.toast=msg;
+ clearTimeout(toastTimer);
+ const app=document.getElementById('app');
+ let el=document.querySelector('.toast');
+ if(!el&&app){el=document.createElement('div');el.className='toast';app.appendChild(el)}
+ if(el)el.textContent=msg;
+ toastTimer=setTimeout(()=>{ui.toast='';document.querySelector('.toast')?.remove()},1500);
+}
+function legacyCopyText(text){
+ const ta=document.createElement('textarea');
+ ta.value=String(text??'');
+ ta.setAttribute('readonly','');
+ ta.style.position='fixed';
+ ta.style.left='-9999px';
+ ta.style.top='0';
+ ta.style.opacity='0';
+ ta.style.pointerEvents='none';
+ document.body.appendChild(ta);
+ ta.focus();
+ ta.select();
+ try{ta.setSelectionRange(0,ta.value.length)}catch(e){}
+ let ok=false;
+ try{ok=document.execCommand('copy')}catch(e){}
+ ta.remove();
+ return ok;
+}
+function copyText(text){
+ const value=String(text??'');
+ // iPhoneのホーム画面追加(PWA)ではClipboard APIが失敗扱いになることがあるため、
+ // ユーザー操作中に同期コピーを先に試し、失敗時だけClipboard APIへフォールバックする。
+ if(legacyCopyText(value))return Promise.resolve(true);
+ if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(value).then(()=>true).catch(()=>false);
+ return Promise.resolve(false);
+}
 function enabledShotStyles(){return (data.settings.shotStyles||[]).filter(x=>x.enabled===true).map(x=>x.label)}
 function enabledFeedback(type){return (data.settings.feedback?.[type]||[]).filter(x=>x.enabled===true).map(x=>x.label)}
 function shotHasGood(s){return (Array.isArray(s.goods)&&s.goods.length>0)||s.quality==='Good'}
@@ -622,7 +657,7 @@ function onClick(e){
  else if(a==='next-hole'){mutate(()=>{const r=currentRound();r.currentHoleIndex=Math.min(r.currentHoleIndex+1,r.holes.length-1);const h=currentHole(r);if(h.currentRemainingY==null)h.currentRemainingY=h.distance;h.stage=h.stage||'shot'})}
  else if(a==='finish-round'){finishRound()}
  else if(a==='json'){const r=roundById(t.dataset.id)||currentRound();if(!r)return;if(completedHoles(r).length<3){toast('JSONは3H終了後から作成できます');return}if(ui.modal?.type==='memo'&&r===currentRound()){const h=currentHole(),memo=document.getElementById('memo-text');if(h&&memo){h.memo=memo.value||'';persist()}}ui.modal={type:'json',json:roundJson(r)};render()}
- else if(a==='copy-json'){navigator.clipboard?.writeText(ui.modal.json).then(()=>toast('JSONをコピーしました')).catch(()=>toast('コピーできませんでした'))}
+ else if(a==='copy-json'){copyText(ui.modal?.json||'').then(ok=>toast(ok?'JSONをコピーしました':'コピーできませんでした'))}
  else if(a==='close-modal'){ui.modal=null;render()}
  else if(a==='add-club-draft'){if(!ui.clubDraft)ui.clubDraft=clubDraftRows();if(ui.clubDraft.length<14){ui.clubDraft.push({id:uid(),name:'',typical:'',clubType:''});render()}}
  else if(a==='save-clubs'){if(clubDraftValid()){data.settings.clubs=(ui.clubDraft||[]).map(x=>({id:x.id||uid(),name:String(x.name).trim(),typical:Number(x.typical),clubType:x.clubType}));persist();ui.clubDraft=null;ui.prev='settings-clubs';ui.screen='settings';render();toast('クラブ設定を保存しました')}}
