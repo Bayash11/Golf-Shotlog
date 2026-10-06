@@ -86,13 +86,14 @@ button{cursor:pointer}
 .nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:430px;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.96);backdrop-filter:blur(16px);border-top:1px solid #E7EBF0;display:grid;grid-template-columns:repeat(4,1fr);z-index:50}
 .nav button{border:0;background:transparent;color:#7A8495;font-size:11px;font-weight:650;padding:9px 2px 4px}.nav button.active{color:var(--orange)}.nav-mark{display:block;font-size:21px;line-height:1;margin-bottom:6px;font-weight:700}
 .field{margin-bottom:14px}.label{font-size:13px;font-weight:700;margin-bottom:7px}.input,.select,.textarea{width:100%;border:1px solid var(--border);background:#fff;border-radius:14px;min-height:48px;padding:10px 12px;outline:none}.input:focus,.select:focus,.textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,111,228,.08)}.textarea{min-height:110px;resize:vertical}
-.segment{display:grid;background:var(--soft);padding:3px;border-radius:14px;gap:3px}.segment.two{grid-template-columns:1fr 1fr}.segment.four{grid-template-columns:repeat(4,1fr)}.segment button{border:0;background:transparent;border-radius:11px;min-height:40px;font-weight:700;color:var(--sub);font-size:13px}.segment button.active{background:var(--orange);color:#fff;box-shadow:0 2px 7px rgba(255,106,36,.16)}
-.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--border);background:#fff;border-radius:16px;min-height:40px;padding:8px 12px;font-size:13px;font-weight:650}.chip.active{border-color:var(--orange);background:var(--orange-soft);color:#B8460D}.chip.blue.active{border-color:var(--blue);background:var(--blue-soft);color:#1E57B6}.chip.disabled{opacity:.5}
+.segment{display:grid;background:var(--soft);padding:3px;border-radius:14px;gap:3px}.segment.two{grid-template-columns:1fr 1fr}.segment.four{grid-template-columns:repeat(4,1fr)}.segment button,.segment .tap-choice{border:0;background:transparent;border-radius:11px;min-height:40px;font-weight:700;color:var(--sub);font-size:13px}.segment button.active,.segment .tap-choice.active{background:var(--orange);color:#fff;box-shadow:0 2px 7px rgba(255,106,36,.16)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.tap-choice{display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.chip{border:1px solid var(--border);background:#fff;border-radius:16px;min-height:40px;padding:8px 12px;font-size:13px;font-weight:650}.chip.active{border-color:var(--orange);background:var(--orange-soft);color:#B8460D}.chip.blue.active{border-color:var(--blue);background:var(--blue-soft);color:#1E57B6}.chip.disabled{opacity:.5}
 .club-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.club-btn{border:1px solid var(--border);background:#fff;border-radius:12px;min-height:44px;padding:4px 2px;font-size:14px;font-weight:750;min-width:0}.club-btn.active{border-color:var(--orange);background:var(--orange-soft);color:#B8460D}
 .top-hole{background:var(--orange-soft);color:var(--text);border-radius:16px;box-shadow:var(--shadow);padding:13px 14px;margin-bottom:0;position:relative;z-index:1}.hole-main{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.hole-id{font-size:24px;font-weight:850;color:var(--text)}.top-hole .hole-meta{font-size:13px;color:var(--text)}.top-hole .hole-remaining{font-size:20px;font-weight:850;color:var(--blue);letter-spacing:-.2px;white-space:nowrap}.hole-info-edit{border:0;background:transparent;padding:3px 6px;margin-left:2px;border-radius:9px;color:var(--text);font-size:13px;font-weight:700;vertical-align:1px}.hole-info-edit:active{background:rgba(255,106,36,.10)}.hole-edit-mark{font-size:11px;margin-left:3px;color:var(--text)}.hole-result{font-weight:800;color:var(--text);font-size:14px}.top-hole .tiny{color:var(--text)}
 .shot-card{background:#fff;border-radius:16px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;position:relative}.shot-card.collapsed{padding:12px 42px 12px 14px}.shot-summary{display:flex;align-items:center;justify-content:space-between;gap:8px}.shot-num{width:30px;height:30px;border-radius:50%;background:#EAF2FF;color:#2F6FE4;display:grid;place-items:center;font-weight:800;font-size:12px;flex:0 0 auto}.shot-main{flex:1;min-width:0}.shot-line{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.shot-mini{font-size:11px;color:var(--sub);margin-top:3px;line-height:1.5}.shot-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.shot-tag{display:inline-flex;align-items:center;min-height:22px;padding:3px 7px;border-radius:999px;background:#F2F4F7;color:#526071;font-size:10px;font-weight:750}.shot-tag.good{background:#ECFDF5;color:#047857}.shot-tag.miss{background:#FEF2F2;color:#B42318}.shot-delete-x{position:absolute;right:7px;top:7px;width:30px;height:30px;border:0;border-radius:50%;background:#F7F8FA;color:#8A94A5;font-size:20px;line-height:1;display:grid;place-items:center;z-index:2}.shot-delete-x:active{background:#FEECEC;color:var(--error)}.shot-card.current{padding:15px;border:1px solid rgba(255,106,36,.28)}
 .divider{height:1px;background:#EEF1F4;margin:14px 0}.muted{color:var(--sub)}.tiny{font-size:11px}.small{font-size:12px}.center{text-align:center}
-.direction3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.direction3 button,.green-grid button{border:1px solid var(--border);background:#fff;border-radius:12px;min-height:46px;font-size:12px;font-weight:700}.direction3 button.active,.green-grid button.active{background:var(--orange-soft);border-color:var(--orange);color:#B8460D}.green-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.green-grid button{min-height:50px}.green-grid button.cup{background:#F6FBF8}
+.direction3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.direction3 button,.direction3 .tap-choice,.green-grid button,.green-grid .tap-choice{border:1px solid var(--border);background:#fff;border-radius:12px;min-height:46px;font-size:12px;font-weight:700}.direction3 button.active,.direction3 .tap-choice.active,.green-grid button.active,.green-grid .tap-choice.active{background:var(--orange-soft);border-color:var(--orange);color:#B8460D}.green-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.green-grid button,.green-grid .tap-choice{min-height:50px}.green-grid button.cup,.green-grid .tap-choice.cup{background:#F6FBF8}
 .quick{display:flex;gap:7px;overflow:auto;padding-bottom:2px}.quick button{flex:0 0 auto;border:1px solid var(--border);background:#fff;border-radius:13px;min-height:40px;padding:0 13px;font-weight:700}.stepper{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;align-items:center}.stepper button{border:0;background:var(--soft);border-radius:13px;min-height:46px;font-size:22px;font-weight:600}.stepper .step-val{min-height:46px;border:1px solid var(--border);border-radius:13px;background:#fff;display:grid;place-items:center;font-weight:800;font-size:20px}
 .score-wrap{overflow-x:auto;background:#fff;border-radius:16px;box-shadow:var(--shadow);-webkit-overflow-scrolling:touch}.score-table{border-collapse:separate;border-spacing:0;min-width:980px;width:100%;font-size:12px}.score-table th,.score-table td{border-right:1px solid #EEF1F4;border-bottom:1px solid #EEF1F4;text-align:center;min-width:44px;height:38px;padding:4px}.score-table th:first-child,.score-table td:first-child{position:sticky;left:0;background:#fff;z-index:3;min-width:86px;text-align:left;padding-left:10px;font-weight:700}.score-table thead th{background:var(--orange);color:#fff;font-weight:800}.score-table thead th.total-col{background:var(--blue)}.score-table thead th:first-child{background:#fff;color:var(--text)}.score-table .score-good{background:#FFF1E9;color:#B8460D;font-weight:800}.score-table .score-bad{background:#F7F8FA;font-weight:700}
 .badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:750;background:var(--soft);color:var(--sub)}.badge.orange{background:var(--orange-soft);color:#B8460D}.badge.blue{background:var(--blue-soft);color:#1E57B6}.badge.green{background:#ECFDF5;color:#047857}
@@ -200,17 +201,7 @@ function syncLiveShotButtons(){
  document.querySelectorAll('[data-draft-miss]').forEach(btn=>btn.classList.toggle('active',(d.misses||[]).includes(btn.dataset.draftMiss)));
 }
 function mutateShotDraftInPlace(fn){fn();persist();syncLiveShotButtons()}
-function renderKeepPlayScroll(){
- const scroller=document.querySelector('.round-play-body'),y=scroller?.scrollTop||0;
- render();
- const restore=()=>{const el=document.querySelector('.round-play-body');if(el)el.scrollTop=y};
- restore();requestAnimationFrame(()=>{restore();requestAnimationFrame(restore)});[60,180,350].forEach(ms=>setTimeout(restore,ms));
-}
-function toast(msg){
- ui.toast=msg;
- if(ui.screen==='play')renderKeepPlayScroll();else render();
- setTimeout(()=>{ui.toast='';if(ui.screen==='play')renderKeepPlayScroll();else render()},1500)
-}
+function toast(msg){ui.toast=msg;render();setTimeout(()=>{ui.toast='';render()},1500)}
 function enabledShotStyles(){return (data.settings.shotStyles||[]).filter(x=>x.enabled===true).map(x=>x.label)}
 function enabledFeedback(type){return (data.settings.feedback?.[type]||[]).filter(x=>x.enabled===true).map(x=>x.label)}
 function shotHasGood(s){return (Array.isArray(s.goods)&&s.goods.length>0)||s.quality==='Good'}
@@ -285,18 +276,13 @@ function roundStats(r){
  return{holes:done.length,total,par,diff:total-par,putts,fwN,fwD,fw:pct(fwN,fwD),girN,girD,gir:pct(girN,girD),ob,pen,bunker,allShots,scoreDist};
 }
 function freq(arr,key,values){const out={};values.forEach(v=>out[v]=0);arr.forEach(x=>{const v=typeof key==='function'?key(x):x[key];if(v in out)out[v]++});return out}
-let topResetToken=0;
 function resetViewportTop(){
- const token=++topResetToken;
- const go=()=>{if(token!==topResetToken)return;try{document.activeElement?.blur?.()}catch(e){}window.scrollTo({top:0,left:0,behavior:'auto'});const scroller=document.scrollingElement;if(scroller)scroller.scrollTop=0;document.documentElement.scrollTop=0;document.body.scrollTop=0;const shell=document.querySelector('.shell');if(shell)shell.scrollTop=0;const playBody=document.querySelector('.round-play-body');if(playBody)playBody.scrollTop=0};
- go();
- requestAnimationFrame(()=>{go();requestAnimationFrame(go)});
- [60,180,350,600,900].forEach(ms=>setTimeout(go,ms));
- if(window.visualViewport){
-   const onResize=()=>{go();setTimeout(go,80)};
-   window.visualViewport.addEventListener('resize',onResize,{passive:true});
-   setTimeout(()=>window.visualViewport.removeEventListener('resize',onResize),1200);
- }
+ try{document.activeElement?.blur?.()}catch(e){}
+ window.scrollTo({top:0,left:0,behavior:'auto'});
+ const scroller=document.scrollingElement;if(scroller)scroller.scrollTop=0;
+ document.documentElement.scrollTop=0;document.body.scrollTop=0;
+ const shell=document.querySelector('.shell');if(shell)shell.scrollTop=0;
+ const playBody=document.querySelector('.round-play-body');if(playBody)playBody.scrollTop=0;
 }
 function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','club-detail'].includes(ui.screen);
@@ -306,15 +292,7 @@ function render(){
  const pageChanged=lastRenderedPageKey!==pageKey;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
  const playBody=document.querySelector('.round-play-body');
- if(playBody&&!pageChanged){
-   // A normal button selection inside the same shot must keep its current scroll position.
-   // Also invalidate delayed top-reset callbacks that were scheduled by the previous shot transition.
-   topResetToken++;
-   const restore=()=>{if(document.body.contains(playBody))playBody.scrollTop=previousPlayScroll};
-   restore();
-   requestAnimationFrame(()=>{restore();requestAnimationFrame(restore)});
-   setTimeout(restore,60);
- }
+ if(playBody&&!pageChanged)playBody.scrollTop=previousPlayScroll;
  root.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','none');el.setAttribute('spellcheck','false')});
  if(!historyReady){
    history.replaceState(historyState(),'');
@@ -397,22 +375,22 @@ function shotInput(r,h){
  const green=d.directionMode==='green';
  const styles=enabledShotStyles();
  return`<div class="shot-card current"><div class="row"><span class="shot-num">${h.shots.length+1}</span><div><div class="card-title" style="margin:0">${h.shots.length+1}打目を記録</div><div class="tiny muted">空欄でも次打へ進めます</div></div></div>
- <div class="divider"></div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.filter(c=>c.clubType!=='putter'&&c.name!=='パター'&&c.name!=='PT').map(c=>`<button class="club-btn ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(c.name)}</button>`).join('')}</div>
- <div class="divider"></div><div class="row between"><div class="label" style="margin:0">方向</div><div class="segment two" style="width:170px"><button class="${!green?'active':''}" data-draft="directionMode" data-value="normal">通常</button><button class="${green?'active':''}" data-draft="directionMode" data-value="green">グリーン</button></div></div>
+ <div class="divider"></div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.filter(c=>c.clubType!=='putter'&&c.name!=='パター'&&c.name!=='PT').map(c=>`<div class="club-btn tap-choice ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(c.name)}</div>`).join('')}</div>
+ <div class="divider"></div><div class="row between"><div class="label" style="margin:0">方向</div><div class="segment two" style="width:170px"><div class="tap-choice ${!green?'active':''}" data-draft="directionMode" data-value="normal">通常</div><div class="tap-choice ${green?'active':''}" data-draft="directionMode" data-value="green">グリーン</div></div></div>
  <div style="margin-top:10px">${green?greenDirection(d):normalDirection(d)}</div>
- ${settings.inputs.ballFlight?`<div class="divider"></div><div class="label">球筋</div><div class="grid3">${BALL_FLIGHTS.map(v=>`<button class="chip blue ${d.flight===v?'active':''}" data-draft="flight" data-value="${v}">${v}</button>`).join('')}</div>`:''}
- ${styles.length?`<div class="divider"></div><div class="label">打ち方</div><div class="chips">${styles.map(v=>`<button class="chip ${d.shotType===v?'active':''}" data-draft="shotType" data-value="${v}">${v}</button>`).join('')}</div>`:''}
- ${settings.inputs.feel?`<div class="divider"></div><div class="label">打感</div><div class="grid3">${FEEL_PRIMARY.map(v=>`<button class="chip ${feelArray(d.feel).includes(v)?'active':''}" data-feel="${v}">${v}</button>`).join('')}</div><div class="grid2" style="grid-template-columns:repeat(4,1fr);margin-top:8px">${FEEL_SECONDARY.map(v=>`<button class="chip ${feelArray(d.feel).includes(v)?'active':''}" data-feel="${v}">${v}</button>`).join('')}</div>`:''}
- ${enabledFeedback('good').length?`<div class="divider"></div><div class="label">Good</div><div class="chips">${enabledFeedback('good').map(v=>`<button class="chip ${d.goods.includes(v)?'active':''}" data-draft-good="${esc(v)}">${esc(v)}</button>`).join('')}</div>`:''}
- ${enabledFeedback('miss').length?`<div class="divider"></div><div class="label">ミス</div><div class="chips">${enabledFeedback('miss').map(v=>`<button class="chip ${d.misses.includes(v)?'active':''}" data-draft-miss="${esc(v)}">${esc(v)}</button>`).join('')}</div>`:''}
- ${settings.inputs.slope?`<div class="divider"></div><div class="label">傾斜</div><div class="grid2">${['左足上がり','左足下がり','つま先上がり','つま先下がり'].map(v=>`<button class="chip ${slopeArray(d.slope).includes(v)?'active':''}" data-slope="${v}">${v}</button>`).join('')}</div>`:''}
- ${settings.inputs.lie?`<div class="divider"></div><div class="label">ライ</div><div class="chips">${SHOT_LIES.map(v=>`<button class="chip ${d.lie===v?'active':''}" data-draft="lie" data-value="${v}">${v}</button>`).join('')}</div>`:''}
- <div class="divider"></div><div class="label">到着地点</div><div class="chips">${SHOT_LANDINGS.map(v=>`<button class="chip ${d.landing===v?'active':''}" data-draft="landing" data-value="${v}">${v}</button>`).join('')}</div>
- ${(d.landing==='OB'||d.landing==='ハザード'||d.landing==='ペナルティ')?`<div class="label" style="margin-top:12px">罰打</div><div class="grid3">${[1,2,3].map(v=>`<button class="chip ${Number(d.penalty)===v?'active':''}" data-draft="penalty" data-value="${v}">+${v}${v===3?'（その他）':''}</button>`).join('')}</div>`:''}
+ ${settings.inputs.ballFlight?`<div class="divider"></div><div class="label">球筋</div><div class="grid3">${BALL_FLIGHTS.map(v=>`<div class="chip blue tap-choice ${d.flight===v?'active':''}" data-draft="flight" data-value="${v}">${v}</div>`).join('')}</div>`:''}
+ ${styles.length?`<div class="divider"></div><div class="label">打ち方</div><div class="chips">${styles.map(v=>`<div class="chip tap-choice ${d.shotType===v?'active':''}" data-draft="shotType" data-value="${v}">${v}</div>`).join('')}</div>`:''}
+ ${settings.inputs.feel?`<div class="divider"></div><div class="label">打感</div><div class="grid3">${FEEL_PRIMARY.map(v=>`<div class="chip tap-choice ${feelArray(d.feel).includes(v)?'active':''}" data-feel="${v}">${v}</div>`).join('')}</div><div class="grid2" style="grid-template-columns:repeat(4,1fr);margin-top:8px">${FEEL_SECONDARY.map(v=>`<div class="chip tap-choice ${feelArray(d.feel).includes(v)?'active':''}" data-feel="${v}">${v}</div>`).join('')}</div>`:''}
+ ${enabledFeedback('good').length?`<div class="divider"></div><div class="label">Good</div><div class="chips">${enabledFeedback('good').map(v=>`<div class="chip tap-choice ${d.goods.includes(v)?'active':''}" data-draft-good="${esc(v)}">${esc(v)}</div>`).join('')}</div>`:''}
+ ${enabledFeedback('miss').length?`<div class="divider"></div><div class="label">ミス</div><div class="chips">${enabledFeedback('miss').map(v=>`<div class="chip tap-choice ${d.misses.includes(v)?'active':''}" data-draft-miss="${esc(v)}">${esc(v)}</div>`).join('')}</div>`:''}
+ ${settings.inputs.slope?`<div class="divider"></div><div class="label">傾斜</div><div class="grid2">${['左足上がり','左足下がり','つま先上がり','つま先下がり'].map(v=>`<div class="chip tap-choice ${slopeArray(d.slope).includes(v)?'active':''}" data-slope="${v}">${v}</div>`).join('')}</div>`:''}
+ ${settings.inputs.lie?`<div class="divider"></div><div class="label">ライ</div><div class="chips">${SHOT_LIES.map(v=>`<div class="chip tap-choice ${d.lie===v?'active':''}" data-draft="lie" data-value="${v}">${v}</div>`).join('')}</div>`:''}
+ <div class="divider"></div><div class="label">到着地点</div><div class="chips">${SHOT_LANDINGS.map(v=>`<div class="chip tap-choice ${d.landing===v?'active':''}" data-draft="landing" data-value="${v}">${v}</div>`).join('')}</div>
+ ${(d.landing==='OB'||d.landing==='ハザード'||d.landing==='ペナルティ')?`<div class="label" style="margin-top:12px">罰打</div><div class="grid3">${[1,2,3].map(v=>`<div class="chip tap-choice ${Number(d.penalty)===v?'active':''}" data-draft="penalty" data-value="${v}">+${v}${v===3?'（その他）':''}</div>`).join('')}</div>`:''}
  <div class="divider"></div><div class="grid2"><div><div class="label">ショット後の残り</div><div class="row"><input class="input" id="remaining-after" type="number" inputmode="decimal" placeholder="例 142" value="${esc(d.remainingAfterY)}"><span class="small muted">yd</span></div></div><div><div class="label">直接飛距離（任意）</div><div class="row"><input class="input" id="direct-distance" type="number" inputmode="decimal" placeholder="例 235" value="${esc(d.directDistance)}"><span class="small muted">yd</span></div></div></div>
  <div class="divider"></div><button class="primary" data-action="save-shot">${d.landing==='Green'?'記録してパットへ':'記録して次のショット'}</button><button class="ghost" style="width:100%;margin-top:9px" data-action="skip-shot">未入力で次のショット</button><button class="header-btn danger" style="width:100%;margin-top:8px" data-action="manual-holeout">ホールアウト</button></div>`}
-function normalDirection(d){return`<div class="direction3">${SHOT_DIRECTIONS.map(v=>`<button class="${d.direction===v?'active':''}" data-draft="direction" data-value="${v}">${v}</button>`).join('')}</div>`}
-function greenDirection(d){return`<div class="green-grid">${GREEN_CELLS.map(v=>`<button class="${d.greenCell===v?'active':''}" data-draft="greenCell" data-value="${v}">${v}</button>`).join('')}</div>`}
+function normalDirection(d){return`<div class="direction3">${SHOT_DIRECTIONS.map(v=>`<div class="tap-choice ${d.direction===v?'active':''}" data-draft="direction" data-value="${v}">${v}</div>`).join('')}</div>`}
+function greenDirection(d){return`<div class="green-grid">${GREEN_CELLS.map(v=>`<div class="tap-choice ${d.greenCell===v?'active':''}" data-draft="greenCell" data-value="${v}">${v}</div>`).join('')}</div>`}
 function puttInput(r,h){
  const d=h.puttDraft||puttDraft();d.lie=(d.lie||['フラット']).map(puttLieLabel);
  if(h.currentPuttRemainingM==null){return '<div class="card"><div class="card-title">最初のパット距離</div><div class="card-sub">グリーンオン地点からカップまでの残距離を入力します。</div><div class="quick" style="margin:14px 0">'+PUTT_DISTANCE_PRESETS.map(v=>'<button data-action="set-first-putt" data-value="'+v+'">'+v+'m</button>').join('')+'</div><div class="row"><input class="input" id="first-putt-distance" type="number" inputmode="decimal" step="0.5" placeholder="その他"><span class="small muted">m</span></div><button class="primary" style="margin-top:12px" data-action="set-first-putt-custom">パット入力へ</button></div>'}
@@ -549,7 +527,7 @@ function roundJson(r){return JSON.stringify({app:'Shot log',version:1,generatedA
 
 function onClick(e){
  if(e.target.classList?.contains('modal-back')){ui.modal=null;render();return}
- const t=e.target.closest('[data-action],button,[data-result-id],[data-hole-sheet],[data-club-detail],[data-club-move-draft],[data-club-delete-draft]');if(!t)return;
+ const t=e.target.closest('[data-action],button,[data-draft],[data-feel],[data-slope],[data-draft-good],[data-draft-miss],[data-putt-lie],[data-putt-cell],[data-putt-after],[data-result-id],[data-hole-sheet],[data-club-detail],[data-club-move-draft],[data-club-delete-draft]');if(!t)return;
  if(t.dataset.nav){ui.prev=ui.screen;ui.screen=t.dataset.nav;render();return} if(t.dataset.go){ui.prev=ui.screen;if(t.dataset.go==='settings-clubs')ui.clubDraft=clubDraftRows();if(t.dataset.go==='settings-styles')ui.styleDraft=JSON.parse(JSON.stringify(data.settings.shotStyles||[]));if(t.dataset.go==='settings-feedback'){ui.feedbackDraft=JSON.parse(JSON.stringify(data.settings.feedback||{good:[],miss:[]}));ui.feedbackTab='good'}ui.screen=t.dataset.go;render();return}
  if(t.dataset.resultId){ui.prev=ui.screen;ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
  if(t.dataset.dataTab){ui.dataTab=t.dataset.dataTab;render();return}
@@ -566,11 +544,8 @@ function onClick(e){
  if(t.dataset.slope){mutateShotDraftInPlace(()=>{const d=currentHole().draft;d.slope=toggleSlope(d.slope,t.dataset.slope)});return}
  if(t.dataset.draft){
    const k=t.dataset.draft;
-   if(k==='directionMode'||k==='landing'){
-     toggleSimpleDraftField(currentHole().draft,k,t.dataset.value);persist();renderKeepPlayScroll();
-   }else{
-     mutateShotDraftInPlace(()=>toggleSimpleDraftField(currentHole().draft,k,t.dataset.value));
-   }
+   if(k==='directionMode'||k==='landing')mutate(()=>toggleSimpleDraftField(currentHole().draft,k,t.dataset.value));
+   else mutateShotDraftInPlace(()=>toggleSimpleDraftField(currentHole().draft,k,t.dataset.value));
    return
  }
  if(t.dataset.draftGood){mutateShotDraftInPlace(()=>{const d=currentHole().draft;d.goods=toggleArrayValue(d.goods,t.dataset.draftGood)});return}
