@@ -481,20 +481,22 @@ function scorecard(){
  <div class="note" style="margin-top:14px">ホール番号をタップすると、そのホールのショットを確認できます。</div>${r!==data.activeRound?`<button class="primary" style="margin-top:14px" data-result-id="${r.id}">結果サマリーへ</button>`:''}</div>`}
 function resultHeader(back='history'){return`<header class="result-fixed-header"><button class="result-back" data-go="${back}">‹ 戻る</button><div class="result-head-title">ラウンド結果</div><div class="result-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 function resultScoreChart(r){
- const done=r.holes.filter(h=>h.status==='done'),W=360,H=198,L=32,R=12,T=22,B=32;
+ const done=r.holes.filter(h=>h.status==='done'),W=360,H=198,L=34,R=12,T=22,B=32;
  if(!done.length)return'<div class="empty">スコアデータなし</div>';
- let cs=0,cp=0;
- const scoreCum=done.map(h=>(cs+=Number(holeScore(h)||0))),parCum=done.map(h=>(cp+=Number(h.par||0)));
- const max=Math.max(scoreCum[scoreCum.length-1]||0,parCum[parCum.length-1]||0,10),span=Math.max(1,max),cw=(W-L-R)/Math.max(1,done.length-1);
- const y=v=>T+(H-T-B)*(1-v/span),x=i=>L+cw*i;
- let svg=`<svg class="result-score-chart" viewBox="0 0 ${W} ${H}" aria-label="累計スコアと累計パーの推移">`;
- const step=max<=50?10:20;
- for(let v=0;v<=Math.ceil(max/step)*step;v+=step){const yy=y(v);svg+=`<line class="grid" x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}"/><text x="3" y="${yy+3}" font-size="8" fill="#7A8494">${v}</text>`}
- const scorePts=done.map((h,i)=>[x(i),y(scoreCum[i])]),parPts=done.map((h,i)=>[x(i),y(parCum[i])]);
- svg+=`<polyline class="score-line" points="${scorePts.map(p=>p.join(',')).join(' ')}"/><polyline class="par-line" fill="none" points="${parPts.map(p=>p.join(',')).join(' ')}"/>`;
+ let diff=0;
+ const toPar=done.map(h=>(diff+=Number(holeScore(h)||0)-Number(h.par||0)));
+ const rawMin=Math.min(0,...toPar),rawMax=Math.max(0,...toPar),pad=rawMin===rawMax?1:1;
+ const min=rawMin-pad,max=rawMax+pad,span=Math.max(1,max-min),cw=(W-L-R)/Math.max(1,done.length-1);
+ const y=v=>T+(H-T-B)*(1-(v-min)/span),x=i=>L+cw*i,fmt=v=>v===0?'E':(v>0?'+'+v:String(v));
+ let svg=`<svg class="result-score-chart" viewBox="0 0 ${W} ${H}" aria-label="累計To Parの推移">`;
+ const tickStep=span<=8?1:span<=16?2:5;
+ const tickStart=Math.ceil(min/tickStep)*tickStep;
+ for(let v=tickStart;v<=max;v+=tickStep){const yy=y(v);svg+=`<line class="grid" x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}"/><text x="3" y="${yy+3}" font-size="8" fill="#7A8494">${fmt(v)}</text>`}
+ const scorePts=done.map((h,i)=>[x(i),y(toPar[i])]),zeroY=y(0);
+ svg+=`<line class="par-line" x1="${L}" y1="${zeroY}" x2="${W-R}" y2="${zeroY}"/><polyline class="score-line" points="${scorePts.map(p=>p.join(',')).join(' ')}"/>`;
  const labelStep=done.length>12?2:1;
- done.forEach((h,i)=>{const xx=x(i),ys=scorePts[i][1],yp=parPts[i][1];svg+=`<circle cx="${xx}" cy="${ys}" r="4.5" fill="#FF6A24"/><circle cx="${xx}" cy="${yp}" r="3" fill="#AAB4C2"/><text x="${xx}" y="${ys-8}" text-anchor="middle" font-size="8" font-weight="800" fill="#172033">${scoreCum[i]}</text>${(i%labelStep===0||i===done.length-1)?`<text x="${xx}" y="${H-11}" text-anchor="middle" font-size="8" fill="#667085">${h.number}H</text>`:''}`});
- svg+=`<text x="${W-112}" y="10" font-size="8" fill="#FF6A24">● 累計Score</text><text x="${W-52}" y="10" font-size="8" fill="#8C96A4">-- 累計Par</text></svg>`;return svg
+ done.forEach((h,i)=>{const xx=x(i),yy=scorePts[i][1],v=toPar[i],point=v<=0?'#2F6FE4':'#FF6A24';svg+=`<circle cx="${xx}" cy="${yy}" r="4.5" fill="${point}"/><text x="${xx}" y="${yy-8}" text-anchor="middle" font-size="8" font-weight="800" fill="#172033">${fmt(v)}</text>${(i%labelStep===0||i===done.length-1)?`<text x="${xx}" y="${H-11}" text-anchor="middle" font-size="8" fill="#667085">${h.number}H</text>`:''}`});
+ svg+=`<text x="${W-112}" y="10" font-size="8" fill="#FF6A24">● 累計 To Par</text><text x="${W-48}" y="10" font-size="8" fill="#8C96A4">-- Par</text></svg>`;return svg
 }
 function scoreDistPie(d){
  const items=[['バーディ以下',d.birdie,'#2F6FE4'],['パー',d.par,'#DDE5EF'],['ボギー',d.bogey,'#FFB184'],['ダブル以上',d.double,'#FF6A24']],total=Math.max(1,sum(items.map(x=>x[1])));let acc=0,stops=[];
@@ -514,7 +516,7 @@ function result(){const r=roundById(ui.viewRoundId);if(!r)return'';const s=round
  const back=ui.prev&&ui.prev!=='result'?ui.prev:'history';
  return`${resultHeader(back)}<div class="page"><div class="result-meta"><div class="result-meta-date">${esc(r.date)}</div><div class="result-meta-course">${esc(r.courseName)}</div><div class="result-meta-tee">Tee: ${esc(r.tee)}</div></div>
  <div class="card center"><div class="metric-label">TOTAL SCORE</div><div style="font-size:56px;font-weight:850;line-height:1.05;margin:6px 0;color:var(--orange)">${s.total}</div><div class="muted">${scoreLabel(s.diff)}</div><div class="grid3" style="margin-top:16px"><div><strong>${sum(r.holes.slice(0,9).map(h=>holeScore(h)||0))}</strong><div class="tiny muted">OUT</div></div><div><strong>${sum(r.holes.slice(9,18).map(h=>holeScore(h)||0))||'—'}</strong><div class="tiny muted">IN</div></div><div><strong>${s.putts}</strong><div class="tiny muted">PUTT</div></div></div></div>
- <div class="card"><div class="card-title">スコア推移</div><div class="card-sub" style="margin-bottom:6px">実線＝累計スコア / 点線＝累計Par</div>${resultScoreChart(r)}</div>
+ <div class="card"><div class="card-title">スコア推移</div><div class="card-sub" style="margin-bottom:6px">実線＝累計 To Par / 点線＝Par（±0）</div>${resultScoreChart(r)}</div>
  <div class="grid2"><div class="metric"><div class="metric-label">FWキープ率</div><div class="metric-value">${s.fw}%</div></div><div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${s.gir}%</div></div><div class="metric"><div class="metric-label">OB / Pen</div><div class="metric-value">${s.ob} / ${s.pen}</div></div><div class="metric"><div class="metric-label">Bunker</div><div class="metric-value">${s.bunker}</div></div></div>
  <div class="card"><div class="card-title">スコア分布</div>${scoreDistPie(s.scoreDist)}</div>
  <div class="card"><div class="card-title">ショット傾向</div><div class="heat-legend"><span class="heat-key"><span class="heat-swatch heat-low"></span>少ない</span><span class="heat-key"><span class="heat-swatch heat-mid"></span>普通</span><span class="heat-key"><span class="heat-swatch heat-high"></span>多い</span></div>${share3('Par4・Par5 ティーショット方向',dir45,['左','中央','右'])}${heat9('Par3 方向（9マス）',p3)}${share3('球筋',fl,['ドロー','ストレート','フェード'])}${heat9('パター 到達位置（Cup-in除外）',putt,true)}</div>
