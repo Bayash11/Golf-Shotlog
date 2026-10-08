@@ -262,7 +262,7 @@ button{cursor:pointer}
 (() => {
 'use strict';
 const KEY='shot-log:v1:data';
-const TODAY=()=>new Date().toISOString().slice(0,10);
+const TODAY=()=>{const d=new Date(),n=v=>String(v).padStart(2,'0');return d.getFullYear()+'-'+n(d.getMonth()+1)+'-'+n(d.getDate())};
 const uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
 const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
 const pct=(n,d)=>d?Math.round(n/d*100):0;
@@ -321,6 +321,7 @@ function mergeConfig(saved,defs){if(!Array.isArray(saved))return defs;const byLa
 function mergeData(v){const s=defaultSettings(),vs=v.settings||{};return{version:1,settings:{...s,...vs,inputs:{...s.inputs,...(vs.inputs||{})},options:{...s.options,...(vs.options||{})},shotStyles:mergeConfig(vs.shotStyles,s.shotStyles),feedback:{good:mergeConfig(vs.feedback?.good,s.feedback.good),miss:mergeConfig(vs.feedback?.miss,s.feedback.miss)}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
 let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',storageError:'',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
+const firstSavedCourse=data.courses.find(c=>c.id===ui.start.courseId);if(firstSavedCourse)applyStartCourse(firstSavedCourse);
 let lastRenderedScreen=ui.screen;
 let lastRenderedPageKey='';
 let historyReady=false;
@@ -1147,7 +1148,7 @@ function modal(){if(!ui.modal)return'';const m=ui.modal;if(m.type==='memo'){cons
  if(m.type==='confirmDiscardRound'){const r=data.activeRound;return`<div class="modal-back"><div class="modal-card"><div class="card-title danger">途中ラウンドを削除しますか？</div><div class="card-sub">${r?`${esc(r.courseName)} / ${r.holes[r.currentHoleIndex]?.number||1}H までの途中データを削除します。`:'途中ラウンドのデータを削除します。'}<br>この操作は取り消せません。</div><button class="primary" style="background:var(--error);margin-top:16px" data-action="confirm-discard-active-round">途中ラウンドを削除</button><button class="header-btn" style="width:100%;margin-top:6px" data-action="close-modal">キャンセル</button></div></div>`}
  if(m.type==='confirmLogoHome'){
   return '<div class="modal-back"><div class="modal-card"><div class="card-title">ホームへ戻りますか？</div><div class="card-sub">'
-  +(ui.screen==='play'?'途中ラウンドは保存されており、ホームから再開できます。':'開始前の入力内容は保存されません。')
+  +(ui.screen==='play'?'途中ラウンドは保存されており、ホームから再開できます。':'開始前のラウンド設定は確定されません。保存済みのデータは残ります。')
   +'</div><div class="grid2" style="margin-top:16px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" data-action="confirm-logo-home">ホームへ戻る</button></div></div></div>';
  }
  if(m.type==='courseManagerEdit'){
@@ -1286,7 +1287,7 @@ function onClick(e){
   const name=String(document.getElementById('course-manager-name')?.value||'').trim();
   if(!name){toast('ゴルフ場名を入力してください');return}
   const id=ui.modal?.id;
-  if(data.courses.some(x=>x.name===name&&x.id!==id)){toast('同じ名前のゴルフ場が登録されています');return}
+  if(!id&&data.courses.some(x=>x.name===name&&x.tee==='Regular'&&JSON.stringify(x.sections||['OUT','IN'])===JSON.stringify(['OUT','IN']))){toast('同じ名前のゴルフ場が登録されています');return}
   if(id){const c=data.courses.find(x=>x.id===id);if(!c)return;c.name=name}
   else{const c=defaultCourse();c.name=name;data.courses.push(c)}
   ui.modal=null;persist();render();toast('ゴルフ場を保存しました');return;
@@ -1294,7 +1295,7 @@ function onClick(e){
  if(a==='course-manager-delete-confirm'){
   const id=ui.modal?.id;
   data.courses=data.courses.filter(c=>c.id!==id);
-  if(ui.start.courseId===id)ui.start.courseId=data.courses[0]?.id||'';
+  if(ui.start.courseId===id){ui.start.courseId=data.courses[0]?.id||'';const next=data.courses.find(c=>c.id===ui.start.courseId);if(next)applyStartCourse(next)}
   ui.modal=null;persist();render();toast('登録一覧から削除しました');return;
  }
  if(a==='backup-copy'){try{copyText(backupJson())}catch(error){console.error(error);toast('JSONを作成できませんでした')}return}
