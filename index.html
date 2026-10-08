@@ -1009,7 +1009,42 @@ function settingsFeedback(){
  return`${settingsHeader('settings')}<div class="page"><div class="settings-section-title"><h2>Good・ミスの設定</h2></div><div class="config-tabs"><button class="${tab==='good'?'active':''}" data-feedback-tab="good">Good</button><button class="${tab==='miss'?'active':''}" data-feedback-tab="miss">ミス</button></div><div class="config-help">結果入力画面に表示する${tab==='good'?'Good':'ミス'}項目を設定できます。<strong>ONの項目だけ表示</strong>されます。</div>${rows(defs)}${custom.length?`<div class="config-subhead">追加した項目</div>${rows(custom)}`:''}<button class="config-add" data-action="add-feedback-open">＋ 独自の${tab==='good'?'Good':'ミス'}項目を追加</button><button class="config-save" data-action="save-feedback">保存</button></div>`}
 function settingsInput(){const inp=data.settings.inputs;const rows=[['ballFlight','球筋'],['feel','打感'],['slope','傾斜'],['lie','ライ'],['pin','ピン位置'],['penaltyDetails','ペナルティ詳細']];return`${settingsHeader('settings')}<div class="page"><div class="settings-section-title"><h2>ショット入力設定</h2></div><div class="card"><div class="card-title">表示する項目</div><div class="card-sub" style="margin-bottom:8px">ラウンド記録画面で使う順番に並べています。</div>${rows.map(([k,l])=>`<div class="setting-row"><div><strong>${l}</strong></div><button class="switch ${inp[k]?'on':''}" data-toggle-input="${k}"></button></div>`).join('')}</div><div class="note">入力順：クラブ → 方向 → 球筋 → 打ち方 → 打感 → Good → ミス → 傾斜 → ライ → 到着地点 → 距離。打ち方とGood・ミスは専用の設定画面で表示項目を選びます。</div></div>`}
 function settingsRound(){return`${settingsHeader('settings')}<div class="page"><div class="settings-section-title"><h2>ラウンド設定</h2></div><div class="card"><div class="card-title">グリーン狙い自動切替距離</div><div class="card-sub">残り距離が設定値以下のとき、方向入力を9マスで開きます。プレー中に手動切替もできます。</div><div class="row" style="margin-top:14px"><input class="input" id="green-auto" type="number" inputmode="numeric" value="${data.settings.greenAutoYards}"><span class="small muted">yd</span><button class="ghost" data-action="save-round-setting">保存</button></div></div><div class="note">距離はヤード、パットはメートル（0.5m刻み）で固定しています。</div></div>`}
-function settingsData(){return`${settingsHeader('settings')}<div class="page"><div class="settings-section-title"><h2>データ管理</h2></div><div class="list"><div class="list-item"><div><div class="list-title">保存済みコース</div><div class="list-sub">登録コースを端末内に保存</div></div><strong>${data.courses.length}</strong></div><div class="list-item"><div><div class="list-title">ラウンドデータ</div><div class="list-sub">完了済みラウンド</div></div><strong>${data.rounds.length}</strong></div><div class="list-item"><div><div class="list-title">JSON</div><div class="list-sub">ラウンド結果からプレビュー→コピー</div></div><span class="badge blue">COPY</span></div></div><button class="secondary danger" style="margin-top:16px" data-action="clear-samples">サンプルデータだけ削除</button><button class="secondary danger" style="margin-top:10px" data-action="clear-all">全データ削除</button></div>`}
+
+function settingsCourses(){
+ const rows=data.courses.map(c=>'<div class="course-manager-item"><span style="color:var(--orange);font-size:18px">⚑</span><div class="course-manager-name">'+esc(c.name)+'<div class="small muted">'+esc(c.tee||'Regular')+'</div></div><button class="header-btn" data-action="course-manager-edit" data-id="'+esc(c.id)+'">編集</button><button class="header-btn danger" data-action="course-manager-delete" data-id="'+esc(c.id)+'">削除</button></div>').join('');
+ return settingsHeader('settings')+'<div class="page"><div class="settings-section-title"><h2>ゴルフ場管理</h2><span>'+data.courses.length+'件登録</span></div>'
+ +'<div class="setup-help">ここで登録したゴルフ場はラウンド開始画面で選択できます。登録名を変更・削除しても過去のラウンド記録は変わりません。</div>'
+ +'<button class="primary" data-action="course-manager-add" style="margin-bottom:16px">＋ 新しいゴルフ場を追加</button>'
+ +(rows||'<div class="empty">まだゴルフ場が登録されていません。</div>')
+ +'<div class="note">Par・距離はラウンド開始画面で確認・編集できます。</div></div>';
+}
+function backupJson(){return JSON.stringify({app:'Shot log',exportVersion:1,exportedAt:new Date().toISOString(),data},null,2)}
+function backupFileName(){const d=new Date(),n=v=>String(v).padStart(2,'0');return 'Shotlog_backup_'+d.getFullYear()+n(d.getMonth()+1)+n(d.getDate())+'_'+n(d.getHours())+n(d.getMinutes())+'.json'}
+function downloadBackup(){
+ try{
+  const file=new Blob([backupJson()],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(file),link=document.createElement('a');
+  link.href=url;link.download=backupFileName();link.style.display='none';
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  toast('JSONファイルの保存画面をご確認ください');
+ }catch(error){console.error('Shot log: backup download failed',error);toast('JSONファイルを保存できませんでした。コピーをご利用ください')}
+}
+function settingsData(){
+ return settingsHeader('settings')+'<div class="page">'
+ +'<div class="settings-section-title"><h2>データ管理</h2></div>'
+ +'<div class="setup-help">この端末に保存されているデータを確認できます。</div>'
+ +'<div class="data-stat-grid"><div class="data-stat-card"><span>保存済みコース</span><strong>'+data.courses.length+' <small>件</small></strong></div><div class="data-stat-card"><span>完了済みラウンド</span><strong>'+data.rounds.length+' <small>件</small></strong></div></div>'
+ +'<div class="note" style="margin-bottom:18px">データはこのブラウザの端末内ストレージに保存されます。ブラウザのデータ消去や機種変更により、記録が失われる場合があります。</div>'
+ +'<div class="card"><div class="card-title">全データエクスポート</div><p class="card-sub">ラウンド履歴・ゴルフ場・クラブ・打ち方・Good／ミスなど、アプリの保存データをJSON形式で出力します。</p>'
+ +'<div class="grid2" style="margin-top:14px"><button class="ghost" data-action="backup-copy">JSONをコピー</button><button class="primary" data-action="backup-download">ファイルに保存</button></div>'
+ +'<p class="setup-caption">iPhoneでは共有／ダウンロードのメニューから「ファイル」に保存してください。復元機能は現在ありません。</p>'
+ +'<div class="divider"></div><div class="small muted">個別ラウンドのJSONは従来どおりラウンド結果画面から出力できます。</div></div>'
+ +'<div class="section-head" style="margin-top:24px"><h2>データ削除</h2></div>'
+ +'<div class="card"><div class="card-title">サンプルデータの削除</div><p class="card-sub">テスト用のラウンドデータを削除します。</p><button class="secondary danger" style="margin-top:12px" data-action="clear-samples">サンプルデータだけ削除</button>'
+ +'<div class="divider"></div><div class="card-title">全データ削除</div><p class="card-sub">保存済みの設定・ゴルフ場・ラウンド記録を削除します。元に戻せません。</p><button class="secondary danger" style="margin-top:12px" data-action="clear-all">全データ削除</button></div>'
+ +'</div>';
+}
 
 function holeSheetShotCard(r,h,shot,i){
  const canEdit=r===data.activeRound,expanded=ui.modal?.type==='holeSheet'&&ui.modal.expanded===i,putt=shot.type==='putt';
