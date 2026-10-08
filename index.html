@@ -218,6 +218,12 @@ button{cursor:pointer}
 .sc-cell.sc-tee{gap:1px}
 .sc-cell .sc-tee-club{font-size:9px;font-weight:850}
 .sc-cell .sc-tee-arrow{display:block;color:var(--blue);font-size:17px;font-weight:750;line-height:1.1}
+
+/* 18H continuous scorecard: keep field labels visible while swiping horizontally. */
+.sc-table-scroll .sc-grid .sc-label{position:sticky;left:0;z-index:3;box-shadow:3px 0 5px rgba(23,32,51,.055)}
+.sc-table-scroll .sc-grid .sc-head-label{position:sticky;left:0;z-index:4;box-shadow:3px 0 5px rgba(23,32,51,.09)}
+.sc-table-scroll .sc-grid{align-items:stretch}
+.sc-switch button{touch-action:manipulation}
 </style>
 </head>
 <body><div id="app"></div>
@@ -448,12 +454,19 @@ function resetViewportTop(){
 function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','club-detail'].includes(ui.screen);
  const previousPlayScroll=document.querySelector('.round-play-body')?.scrollTop||0;
+ const previousScorecardScroll=document.querySelector('.sc-table-scroll')?.scrollLeft??null;
  const screenChanged=lastRenderedScreen!==ui.screen;
  const pageKey=[ui.screen,ui.screen==='data'?ui.dataTab:'',data.activeRound?.id||'',data.activeRound?.currentHoleIndex??'',currentHole()?.shots?.length??'',currentHole()?.stage||'',currentHole()?.currentPuttRemainingM??'',ui.viewRoundId||'',ui.scorecardRoundId||'',ui.clubId||''].join('|');
  const pageChanged=lastRenderedPageKey!==pageKey;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
  const playBody=document.querySelector('.round-play-body');
  if(playBody&&!pageChanged)playBody.scrollTop=previousPlayScroll;
+ const scoreArea=ui.screen==='scorecard'?document.querySelector('.sc-table-scroll'):null;
+ if(scoreArea){
+  if(!screenChanged&&previousScorecardScroll!==null)scoreArea.scrollLeft=previousScorecardScroll;
+  else if(ui.scorecardHalf===1)scorecardScrollToHalf(1,'auto');
+  scoreArea.addEventListener('scroll',()=>scorecardTrackScroll(scoreArea),{passive:true});
+ }
  root.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','none');el.setAttribute('spellcheck','false')});
  if(!historyReady){
    history.replaceState(historyState(),'');
@@ -612,6 +625,36 @@ function puttInput(r,h){
  return '<div class="shot-card current"><div class="row"><span class="shot-num">'+strokeNo+'</span><div><div class="card-title" style="margin:0">'+(holePutts(h)+1)+' PUTT</div><div class="tiny muted">現在 <span id="putt-current-distance-inline">'+Number(h.currentPuttRemainingM).toFixed(1)+'</span>m</div></div></div>'+firstPuttAdjust+'<div class="divider"></div><div class="label">ライ</div><div class="grid3">'+PUTT_LIE_PRIMARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="grid2" style="margin-top:8px">'+PUTT_LIE_SECONDARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="divider"></div><div class="label">到達位置</div><div class="green-grid">'+cells.map(v=>'<div class="tap-choice '+(v==='Cup-in'?'cup ':'')+(d.cell===v?'active':'')+'" data-putt-cell="'+v+'">'+v+'</div>').join('')+'</div><div id="putt-distance-section" '+(d.cell==='Cup-in'?'hidden':'')+'><div class="divider"></div><div class="label">パット後の残り距離</div><div class="quick" style="margin-bottom:9px">'+PUTT_DISTANCE_PRESETS.map(v=>'<div class="tap-choice '+(Number(d.afterM)===Number(v)?'active':'')+'" data-putt-after="'+v+'">'+v+'m</div>').join('')+'</div><div class="stepper"><div class="tap-choice" data-putt-step="-0.5">−</div><div class="step-val">'+Number(d.afterM||0).toFixed(1)+'m</div><div class="tap-choice" data-putt-step="0.5">＋</div></div><div class="row" style="margin-top:9px"><input class="input" id="putt-after-custom" type="number" step="0.5" inputmode="decimal" placeholder="その他の距離"><span class="small muted">m</span></div></div><div class="divider"></div><button class="primary" id="save-putt-button" data-action="save-putt">'+(d.cell==='Cup-in'?'Cup-in・ホールアウト':'パットを記録')+'</button></div>';
 }
 function completedHoleView(r,h){const last=h.number>=r.holeCount;return`<div class="card"><div class="card-title">${h.number}H 完了</div><div class="grid3"><div class="metric"><div class="metric-label">Score</div><div class="metric-value orange">${holeScore(h)}</div></div><div class="metric"><div class="metric-label">PUTT</div><div class="metric-value blue">${holePutts(h)}</div></div><div class="metric"><div class="metric-label">To Par</div><div class="metric-value">${scoreLabel(holeScore(h)-h.par)}</div></div></div><div class="grid2" style="margin-top:12px"><button class="secondary" data-action="open-current-hole-shots">ショット編集</button><button class="secondary" data-action="open-scorecard">スコアカード</button></div>${last?`<button class="primary" style="margin-top:12px" data-action="finish-round">ラウンド結果へ</button>`:`<button class="primary" style="margin-top:12px" data-action="next-hole">${h.number+1}Hへ</button>`}</div>`}
+function scorecardSetActiveHalf(half){
+ const value=half===1?1:0;
+ if(ui.scorecardHalf!==value){
+  ui.scorecardHalf=value;
+  if(historyReady&&!restoringHistory&&ui.screen==='scorecard')history.replaceState(historyState(),'');
+ }
+ document.querySelectorAll('.sc-switch [data-scorecard-half]').forEach(button=>{
+  const active=Number(button.dataset.scorecardHalf)===value;
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',active?'true':'false');
+ });
+}
+function scorecardHalfOffset(area){
+ const tenth=area?.querySelector('[data-hole-sheet="10"]');
+ if(!area||!tenth)return 0;
+ return area.scrollLeft+tenth.getBoundingClientRect().left-area.getBoundingClientRect().left;
+}
+function scorecardScrollToHalf(half,behavior='smooth'){
+ const area=document.querySelector('.sc-table-scroll');
+ if(!area)return;
+ const stickyWidth=area.querySelector('.sc-head-label')?.getBoundingClientRect().width||42;
+ const left=half===1?Math.max(0,scorecardHalfOffset(area)-stickyWidth-2):0;
+ area.scrollTo({left,behavior});
+}
+function scorecardTrackScroll(area){
+ if(!area?.querySelector('[data-hole-sheet="10"]'))return;
+ const tenth=scorecardHalfOffset(area);
+ const half=area.scrollLeft+area.clientWidth*.5>=tenth?1:0;
+ if(half!==ui.scorecardHalf)scorecardSetActiveHalf(half);
+}
 function scorecardHeader(){return `<header class="settings-fixed-header"><button class="settings-back" data-go="${ui.scorecardReturnTo||'play'}">‹ 戻る</button><div class="settings-head-title">スコアカード</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 function scorecardTeeArrow(shot,isPar3){
  if(!shot)return '—';
@@ -665,15 +708,24 @@ function scorecard(){
   ['OB',h=>h.shots.length||holeScore(h)!=null?h.shots.filter(x=>x.landing==='OB').length:'—'],
   ['Pen',h=>h.shots.length||holeScore(h)!=null?holePenalty(h):'—']
  ];
- const aggregates=half===0?[{label:front,holes:shown,kind:'half'}]:[{label:back,holes:shown,kind:'half'},{label:'TOTAL',holes,kind:'total'}];
- const gridColumns=`42px repeat(9,29px) ${aggregates.map(a=>a.kind==='total'?'62px':'54px').join(' ')}`;
- const head=`<div class="sc-cell sc-head sc-head-label">H</div>${shown.map(h=>`<button type="button" class="sc-cell sc-head" data-hole-sheet="${h.number}" aria-label="${h.number}ホールの履歴">${h.number}</button>`).join('')}${aggregates.map(a=>`<div class="sc-cell sc-head sc-head-aggregate${a.kind==='total'?' sc-head-total':''}">${esc(a.label)}</div>`).join('')}`;
- const body=rows.map(([label,fn])=>`<div class="sc-cell sc-label">${label}</div>${shown.map(h=>{const v=fn(h),score=holeScore(h),cls=label==='Score'&&score!=null?(score<h.par?' sc-under':score>h.par?' sc-over':' sc-even'):(['FW','GIR'].includes(label)&&v==='○'?' sc-yes':'');return `<div class="sc-cell${label==='Tee'?' sc-tee':''}${cls}">${v}</div>`}).join('')}${aggregates.map(a=>`<div class="sc-cell sc-aggregate${a.kind==='total'?' sc-aggregate-total':''}">${scorecardSummaryCell(label,a.holes)}</div>`).join('')}`).join('');
+ // All 18 holes share one horizontal table. OUT/IN are jump points, not separate tables.
+ const columns=[...holes.slice(0,9).map(h=>({kind:'hole',hole:h})),{kind:'half',label:front,holes:holes.slice(0,9)}];
+ if(hasBack){
+  columns.push(...holes.slice(9,18).map(h=>({kind:'hole',hole:h})),{kind:'half',label:back,holes:holes.slice(9,18)},{kind:'total',label:'TOTAL',holes});
+ }
+ const gridColumns='42px '+columns.map(col=>col.kind==='hole'?'29px':col.kind==='total'?'62px':'54px').join(' ');
+ const head=`<div class="sc-cell sc-head sc-head-label">H</div>${columns.map(col=>col.kind==='hole'? `<button type="button" class="sc-cell sc-head" data-hole-sheet="${col.hole.number}" aria-label="${col.hole.number}ホールの履歴">${col.hole.number}</button>` : `<div class="sc-cell sc-head sc-head-aggregate${col.kind==='total'?' sc-head-total':''}">${esc(col.label)}</div>`).join('')}`;
+ const body=rows.map(([label,fn])=>`<div class="sc-cell sc-label">${label}</div>${columns.map(col=>{
+  if(col.kind!=='hole')return `<div class="sc-cell sc-aggregate${col.kind==='total'?' sc-aggregate-total':''}">${scorecardSummaryCell(label,col.holes)}</div>`;
+  const h=col.hole,v=fn(h),score=holeScore(h);
+  const cls=label==='Score'&&score!=null?(score<h.par?' sc-under':score>h.par?' sc-over':' sc-even'):(['FW','GIR'].includes(label)&&v==='○'?' sc-yes':'');
+  return `<div class="sc-cell${label==='Tee'?' sc-tee':''}${cls}">${v}</div>`;
+ }).join('')}`).join('');
  const total=st.holes?st.total:'—',diff=st.holes?scoreLabel(st.diff):'—';
  return `${scorecardHeader()}<div class="page sc-page">
   <div class="sc-overview"><div><strong>${esc(r.courseName||'ラウンド')}</strong><small>${esc(r.date)} · ${esc(r.tee)} · ${holes.length}H${r.green?' · '+esc(r.green):''}</small></div><div class="sc-total"><strong>${total}</strong><small>TOTAL ${diff}</small></div></div>
   ${hasBack?`<div class="sc-switch"><button class="${half===0?'active':''}" data-scorecard-half="0">${esc(front)} · 1〜9H</button><button class="${half===1?'active':''}" data-scorecard-half="1">${esc(back)} · 10〜18H</button></div>`:`<div class="sc-section">${esc(front)} · 1〜9H</div>`}
-  <div class="sc-board"><div class="sc-table-scroll" aria-label="スコアカード表。横スクロールで合計列を表示できます"><div class="sc-grid" style="grid-template-columns:${gridColumns}">${head}${body}</div></div><div class="sc-board-foot"><span>ホール番号でショット履歴を表示</span><strong>${esc(half?back:front)} <b>${finished.length?halfScore:'—'}</b>${finished.length?' ('+scoreLabel(halfScore-halfPar)+')':''}</strong></div></div>
+  <div class="sc-board"><div class="sc-table-scroll" aria-label="スコアカード表。横スクロールで1ホールから18ホールまで連続して見られます"><div class="sc-grid" style="grid-template-columns:${gridColumns}">${head}${body}</div></div><div class="sc-board-foot"><span>ホール番号でショット履歴を表示</span><strong>${esc(half?back:front)} <b>${finished.length?halfScore:'—'}</b>${finished.length?' ('+scoreLabel(halfScore-halfPar)+')':''}</strong></div></div>
   <div class="sc-legend"><span><i class="sc-dot sc-dot-over"></i>ボギー以上</span><span><i class="sc-dot sc-dot-under"></i>バーディー以下</span></div>
   <div class="sc-summary"><div class="card-title">ラウンドサマリー</div><div class="sc-stats"><div><small>PUTT</small><strong>${st.holes?st.putts:'—'}</strong></div><div><small>FWキープ</small><strong>${st.fwD?st.fw+'%':'—'}</strong></div><div><small>GIR</small><strong>${st.girD?st.gir+'%':'—'}</strong></div></div></div>
   ${ui.scorecardReturnTo==='result'&&r!==data.activeRound?'<button class="secondary" style="width:100%;margin-top:15px" data-go="result">結果サマリーへ戻る</button>':''}
@@ -1047,7 +1099,7 @@ function onClick(e){
  if(t.dataset.puttAfter){mutatePuttDraftInPlace(()=>{currentHole().puttDraft.afterM=Number(t.dataset.puttAfter)});return}
  if(t.dataset.puttStep){mutatePuttDraftInPlace(()=>{const d=currentHole().puttDraft;d.afterM=Math.max(.5,Math.round((Number(d.afterM||.5)+Number(t.dataset.puttStep))*2)/2)});return}
  if(t.dataset.puttCurrentStep){const h=currentHole();if(h&&holePutts(h)===0){h.currentPuttRemainingM=Math.max(.5,Math.round((Number(h.currentPuttRemainingM||.5)+Number(t.dataset.puttCurrentStep))*2)/2);persist();const main=document.getElementById('putt-current-distance');if(main)main.textContent=Number(h.currentPuttRemainingM).toFixed(1)+'m';const inline=document.getElementById('putt-current-distance-inline');if(inline)inline.textContent=Number(h.currentPuttRemainingM).toFixed(1)}return}
- if(t.dataset.scorecardHalf!==undefined){ui.scorecardHalf=Number(t.dataset.scorecardHalf)===1?1:0;render();return}
+ if(t.dataset.scorecardHalf!==undefined){const half=Number(t.dataset.scorecardHalf)===1?1:0;scorecardSetActiveHalf(half);scorecardScrollToHalf(half);return}
  if(t.dataset.holeSheet){const r=ui.screen==='shot-history'?roundById(ui.viewRoundId):(roundById(ui.scorecardRoundId)||currentRound()),n=Number(t.dataset.holeSheet);if(!r||!r.holes.some(h=>h.number===n))return;ui.modal={type:'holeSheet',roundId:r.id,hole:n,expanded:null};render();return}
  if(t.dataset.clubMoveDraft!==undefined){const i=Number(t.dataset.clubMoveDraft),j=i+Number(t.dataset.dir);if(ui.clubDraft&&j>=0&&j<ui.clubDraft.length){const x=ui.clubDraft[i];ui.clubDraft[i]=ui.clubDraft[j];ui.clubDraft[j]=x;render()}return}
  if(t.dataset.clubDeleteDraft!==undefined){const i=Number(t.dataset.clubDeleteDraft);if(ui.clubDraft){ui.clubDraft.splice(i,1);render()}return}
@@ -1056,7 +1108,7 @@ function onClick(e){
  if(t.dataset.toggleInput){mutate(()=>{const k=t.dataset.toggleInput;data.settings.inputs[k]=!data.settings.inputs[k]});return}
  const a=t.dataset.action;
  if(a==='toggle-hole-sheet-shot'&&ui.modal?.type==='holeSheet'){const i=Number(t.dataset.shotIndex),scroll=document.querySelector('.hole-sheet-body')?.scrollTop||0;ui.modal.expanded=ui.modal.expanded===i?null:i;render();const body=document.querySelector('.hole-sheet-body');if(body)body.scrollTop=scroll;return}
- if(a==='hole-sheet-change'&&ui.modal?.type==='holeSheet'){const m=ui.modal,r=roundById(m.roundId),idx=r?.holes.findIndex(h=>h.number===m.hole),j=idx+Number(t.dataset.dir);if(r&&idx>=0&&j>=0&&j<r.holes.length){m.hole=r.holes[j].number;m.expanded=null;if(ui.screen==='scorecard')ui.scorecardHalf=j>=9?1:0;render()}return}
+ if(a==='hole-sheet-change'&&ui.modal?.type==='holeSheet'){const m=ui.modal,r=roundById(m.roundId),idx=r?.holes.findIndex(h=>h.number===m.hole),j=idx+Number(t.dataset.dir);if(r&&idx>=0&&j>=0&&j<r.holes.length){m.hole=r.holes[j].number;m.expanded=null;if(ui.screen==='scorecard'){const selectedHalf=j>=9?1:0;if(ui.scorecardHalf!==selectedHalf){ui.scorecardHalf=selectedHalf;render();scorecardScrollToHalf(selectedHalf,'auto')}else render()}else render()}return}
  if(a==='new-round'){ui.screen='start';render()}
  else if(a==='resume-round'){ui.screen='play';render();resetViewportTop()}
  else if(a==='discard-active-round'){if(data.activeRound){ui.modal={type:'confirmDiscardRound'};render()}}
