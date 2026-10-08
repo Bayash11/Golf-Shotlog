@@ -347,7 +347,7 @@ function syncLivePuttControls(){
  document.querySelectorAll('[data-putt-after]').forEach(el=>el.classList.toggle('active',Number(d.afterM)===Number(el.dataset.puttAfter)));
  const distance=document.getElementById('putt-distance-section');
  if(distance)distance.hidden=d.cell==='Cup-in';
- const value=document.querySelector('.step-val');
+ const value=document.querySelector('#putt-distance-section .step-val');
  if(value)value.textContent=Number(d.afterM||0).toFixed(1)+'m';
  const save=document.getElementById('save-putt-button');
  if(save)save.textContent=d.cell==='Cup-in'?'Cup-in・ホールアウト':'パットを記録';
