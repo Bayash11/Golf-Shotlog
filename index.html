@@ -224,6 +224,9 @@ button{cursor:pointer}
 .sc-table-scroll .sc-grid .sc-head-label{position:sticky;left:0;z-index:4;box-shadow:3px 0 5px rgba(23,32,51,.09)}
 .sc-table-scroll .sc-grid{align-items:stretch}
 .sc-switch button{touch-action:manipulation}
+
+/* A persistent storage failure notice: never present unsaved data as safe. */
+.storage-alert{position:fixed;z-index:120;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(calc(100% - 24px),410px);padding:12px 14px;border-radius:12px;border:2px solid #E66042;background:#FFF4EF;color:#8C281F;font-size:12px;font-weight:750;line-height:1.55;box-shadow:0 8px 30px rgba(23,32,51,.18);pointer-events:none}
 </style>
 </head>
 <body><div id="app"></div>
@@ -289,7 +292,7 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&v.ve
 function mergeConfig(saved,defs){if(!Array.isArray(saved))return defs;const byLabel=new Map(saved.map(x=>[x?.label,x]));const base=defs.map(x=>{const old=byLabel.get(x.label);return old?{...x,...old,custom:false}:x});const custom=saved.filter(x=>x&&x.custom&&String(x.label||'').trim()&&!base.some(d=>d.label===x.label)).map(x=>({...x,label:String(x.label).trim(),custom:true}));return base.concat(custom)}
 function mergeData(v){const s=defaultSettings(),vs=v.settings||{};return{version:1,settings:{...s,...vs,inputs:{...s.inputs,...(vs.inputs||{})},options:{...s.options,...(vs.options||{})},shotStyles:mergeConfig(vs.shotStyles,s.shotStyles),feedback:{good:mergeConfig(vs.feedback?.good,s.feedback.good),miss:mergeConfig(vs.feedback?.miss,s.feedback.miss)}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
-let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
+let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',storageError:'',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
 let lastRenderedScreen=ui.screen;
 let lastRenderedPageKey='';
 let historyReady=false;
@@ -300,7 +303,26 @@ function applyHistoryState(s){
  if(!s||!s.shotlog){ui.screen='home';ui.prev='home';ui.resultReturnTo='home';ui.resultFromFinish=false;ui.scorecardReturnTo='play';ui.modal=null;return}
  ui.screen=s.screen==='play'&&!data.activeRound?'home':(s.screen||'home');ui.prev=s.prev||'home';ui.resultReturnTo=['home','history','data'].includes(s.resultReturnTo)?s.resultReturnTo:(['home','history','data'].includes(s.prev)?s.prev:'home');ui.resultFromFinish=Boolean(s.resultFromFinish);ui.scorecardReturnTo=s.scorecardReturnTo==='result'?'result':'play';ui.scorecardHalf=s.scorecardHalf===1?1:0;ui.dataTab=s.dataTab||ui.dataTab;ui.viewRoundId=s.viewRoundId||null;ui.scorecardRoundId=s.scorecardRoundId||null;ui.clubId=s.clubId||null;ui.modal=null;
 }
-function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
+// Keep save failures visible: in-memory edits are not a durable backup.
+function syncStorageAlert(){
+ const app=document.getElementById('app');if(!app)return;
+ let warning=app.querySelector('.storage-alert');
+ if(!ui.storageError){if(warning)warning.remove();return}
+ if(!warning){warning=document.createElement('div');warning.className='storage-alert';warning.setAttribute('role','alert');app.appendChild(warning)}
+ warning.textContent=ui.storageError;
+}
+function persist(){
+ try{
+  localStorage.setItem(KEY,JSON.stringify(data));
+  if(ui.storageError){ui.storageError='';syncStorageAlert()}
+  return true;
+ }catch(error){
+  console.error('Shot log: local data could not be saved',error);
+  ui.storageError='端末へのデータ保存に失敗しました。画面を閉じずにブラウザの保存容量や設定を確認してください。';
+  syncStorageAlert();
+  return false;
+ }
+}
 function mutate(fn){fn();persist();render()}
 function syncLiveShotButtons(){
  const h=currentHole(),d=h?.draft;if(!d)return;
@@ -333,6 +355,7 @@ function syncLivePuttControls(){
 function mutatePuttDraftInPlace(fn){fn();persist();syncLivePuttControls()}
 let toastTimer=null;
 function toast(msg){
+ if(ui.storageError&&/(保存|削除|修正|追加)/.test(String(msg)))msg='端末に保存できませんでした。画面上の警告を確認してください。';
  ui.toast=msg;
  clearTimeout(toastTimer);
  const app=document.getElementById('app');
@@ -468,6 +491,7 @@ function render(){
   scoreArea.addEventListener('scroll',()=>scorecardTrackScroll(scoreArea),{passive:true});
  }
  root.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','none');el.setAttribute('spellcheck','false')});
+ syncStorageAlert();
  if(!historyReady){
    history.replaceState(historyState(),'');
    historyReady=true;
