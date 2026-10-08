@@ -317,6 +317,79 @@ button{cursor:pointer}
  .round-result-page .result-quick-actions button{font-size:12px}
 }
 
+
+/* Data analysis UI improvements.
+   Existing score and shot charts, category colors and math are preserved. */
+.analysis-page{padding-top:16px}
+.analysis-page .tabline{gap:3px;padding:4px;background:#EDF1F6;border:1px solid #E6EAF0;box-shadow:none;border-radius:16px;margin-bottom:16px}
+.analysis-page .tabline button{min-width:0;min-height:46px;padding:6px 1px;font-size:11px;line-height:1.25;border-radius:12px;background:transparent;touch-action:manipulation}
+.analysis-page .tabline button.active{background:var(--orange);color:#fff;box-shadow:0 3px 9px rgba(255,106,36,.15)}
+.analysis-page .tabline button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.analysis-page-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 15px}
+.analysis-page-title h2{font-size:21px;font-weight:850;line-height:1.35;margin:0;color:var(--text)}
+.analysis-page-title span{font-size:11px;color:var(--sub);font-weight:700;text-align:right}
+.analysis-page .card,.club-analysis-page .card{border:1px solid #EBEFF3}
+.analysis-page .card-title,.club-analysis-page .card-title{font-size:16px;line-height:1.4;font-weight:800;margin-bottom:13px}
+.analysis-page .analysis-summary-card{padding:16px;margin-bottom:15px}
+.analysis-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.analysis-summary-grid .metric{min-width:0;min-height:88px;padding:13px;background:#F8FAFC;border:1px solid #F1F4F7}
+.analysis-summary-grid .metric-label{font-size:11px;line-height:1.45}
+.analysis-summary-grid .metric-value{font-size:27px;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.analysis-section-heading{margin:25px 2px 12px;display:flex;align-items:center;gap:9px;font-size:17px;font-weight:850;line-height:1.4;color:var(--text)}
+.analysis-section-heading:before{content:"";width:4px;height:21px;border-radius:6px;background:var(--orange);flex:0 0 auto}
+.analysis-page .analysis-play-metrics .metric{min-width:0;min-height:84px}
+.analysis-page .analysis-play-metrics .metric-value{font-variant-numeric:tabular-nums}
+.analysis-page .analysis-play-metrics .grid2{gap:10px}
+.analysis-page .tendency-block{margin-top:18px}
+.analysis-page .share-bar .share-segment,.club-analysis-page .share-bar .share-segment{flex:1 1 0;width:0}
+/* The 34px high rounded bar, divider lines, tiers and legends are unchanged. */
+.analysis-round-list{display:grid;gap:10px}
+.analysis-round-card{width:100%;display:block;background:#fff;border:1px solid #E7EBF0;border-radius:16px;box-shadow:var(--shadow);padding:15px;text-align:left;min-height:83px;touch-action:manipulation}
+.analysis-round-card:active,.analysis-club-row:active{background:#FFF8F4}
+.analysis-round-card:focus-visible,.analysis-club-row:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.analysis-round-main{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.analysis-round-left{min-width:0;flex:1}
+.analysis-round-course{font-size:15px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
+.analysis-round-date{font-size:12px;color:var(--sub);margin-top:7px}
+.analysis-round-nine{background:#F1F4F8;border-radius:5px;padding:3px 5px;color:#586577;font-size:10px;font-weight:800;margin-left:5px}
+.analysis-round-right{text-align:right;flex:0 0 auto}
+.analysis-round-right strong{display:block;font-size:27px;font-weight:850;line-height:1;font-variant-numeric:tabular-nums}
+.analysis-round-right span{display:block;color:var(--orange);font-size:11px;font-weight:800;margin-top:5px}
+.analysis-club-wrap{border:1px solid #EBEFF3;box-shadow:var(--shadow);border-radius:16px;background:#fff;padding:14px}
+.analysis-club-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
+.analysis-club-toolbar-label{font-size:12px;font-weight:700;color:var(--sub)}
+.analysis-club-sort{display:flex;align-items:center;gap:3px;background:#F1F4F8;border-radius:11px;padding:3px}
+.analysis-club-sort button{border:0;background:transparent;border-radius:9px;min-height:38px;padding:6px 9px;font-size:11px;font-weight:800;color:var(--sub);white-space:nowrap;touch-action:manipulation}
+.analysis-club-sort button.active{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(23,32,51,.1)}
+.analysis-club-sort button:focus-visible{outline:2px solid var(--blue)}
+.analysis-club-table-head{display:grid;grid-template-columns:minmax(0,1fr) 64px 74px 12px;gap:6px;align-items:center;padding:0 4px 9px;border-bottom:1px solid #E7EBF0;font-size:11px;font-weight:700;color:var(--sub)}
+.analysis-club-table-head span:nth-child(n+2){text-align:right}
+.analysis-club-row{border:0;border-bottom:1px solid #EEF1F4;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) 64px 74px 12px;gap:6px;align-items:center;text-align:left;width:100%;min-height:54px;padding:9px 4px;touch-action:manipulation}
+.analysis-club-row:last-child{border-bottom:0}
+.analysis-club-name{font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.analysis-club-count,.analysis-club-average{font-size:13px;font-weight:700;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.analysis-club-average{color:var(--sub)}
+.analysis-club-chevron{font-size:19px;color:var(--sub);text-align:right}
+.analysis-club-row.is-putter{color:var(--sub);cursor:default}
+.analysis-club-row.is-putter .analysis-club-name{color:var(--text)}
+.analysis-club-note{font-size:11px;line-height:1.6;color:var(--sub);margin:12px 2px 0}
+.club-analysis-page{padding-top:18px}
+.club-analysis-page .analysis-detail-meta{font-size:12px;line-height:1.5;color:var(--sub);margin:0 2px 14px}
+.club-analysis-page .analysis-detail-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.club-analysis-page .analysis-detail-metrics .metric{min-width:0;background:#F8FAFC;border-color:#F1F4F7;padding:13px}
+.club-analysis-page .analysis-detail-metrics .metric-value{font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.club-analysis-page .stat-legend{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.club-analysis-page .stat-legend span{display:block;overflow-wrap:anywhere;line-height:1.5}
+.club-analysis-page .tendency-block{margin-top:0}
+@media(max-width:350px){
+ .analysis-page .tabline button{font-size:10px}
+ .analysis-club-wrap{padding:11px}
+ .analysis-club-table-head,.analysis-club-row{grid-template-columns:minmax(0,1fr) 52px 69px 10px;gap:3px}
+ .analysis-club-toolbar{align-items:flex-start;flex-direction:column}
+ .analysis-club-sort{align-self:stretch}
+ .analysis-club-sort button{flex:1}
+}
+
 </style>
 </head>
 <body><div id="app"></div>
@@ -382,7 +455,7 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&v.ve
 function mergeConfig(saved,defs){if(!Array.isArray(saved))return defs;const byLabel=new Map(saved.map(x=>[x?.label,x]));const base=defs.map(x=>{const old=byLabel.get(x.label);return old?{...x,...old,custom:false}:x});const custom=saved.filter(x=>x&&x.custom&&String(x.label||'').trim()&&!base.some(d=>d.label===x.label)).map(x=>({...x,label:String(x.label).trim(),custom:true}));return base.concat(custom)}
 function mergeData(v){const s=defaultSettings(),vs=v.settings||{};return{version:1,settings:{...s,...vs,inputs:{...s.inputs,...(vs.inputs||{})},options:{...s.options,...(vs.options||{})},shotStyles:mergeConfig(vs.shotStyles,s.shotStyles),feedback:{good:mergeConfig(vs.feedback?.good,s.feedback.good),miss:mergeConfig(vs.feedback?.miss,s.feedback.miss)}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
-let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',historyQuery:'',storageError:'',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
+let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',clubSort:'registered',historyQuery:'',storageError:'',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
 const firstSavedCourse=data.courses.find(c=>c.id===ui.start.courseId);if(firstSavedCourse)applyStartCourse(firstSavedCourse);
 let lastRenderedScreen=ui.screen;
 let lastRenderedPageKey='';
@@ -970,7 +1043,14 @@ function historyPage(){
   +'<div class="history-round-list" id="history-round-list">'+historyCardsHtml(rs)+'</div></div>';
 }
 
-function dataPage(){return`${dataHeader()}<div class="page" style="padding-top:18px"><div class="tabline">${[['all','全期間'],['recent','直近5R'],['round','ラウンド別'],['club','クラブ別']].map(([k,l])=>`<button class="${ui.dataTab===k?'active':''}" data-data-tab="${k}">${l}</button>`).join('')}</div>${dataTabContent()}</div>`}
+function dataPage(){
+ const tabs=[['all','全期間'],['recent','直近5R'],['round','ラウンド別'],['club','クラブ別']];
+ const info={all:['全期間の分析','全ラウンド'],recent:['直近5Rの分析','直近5ラウンド'],round:['ラウンド別','新しい順'],club:['クラブ別','登録クラブ']};
+ const [title,caption]=info[ui.dataTab]||info.all;
+ return `${dataHeader()}<div class="page analysis-page"><div class="tabline" role="tablist" aria-label="データ分析の対象">
+ ${tabs.map(([key,label])=>`<button type="button" role="tab" aria-selected="${ui.dataTab===key}" class="${ui.dataTab===key?'active':''}" data-data-tab="${key}">${label}</button>`).join('')}
+ </div><div class="analysis-page-title"><h2>${title}</h2><span>${caption}</span></div>${dataTabContent()}</div>`;
+}
 function dataTabContent(){if(ui.dataTab==='recent')return recentData();if(ui.dataTab==='round')return roundData();if(ui.dataTab==='club')return clubData();return allData()}
 function aggregateRounds(rs){const valid=rs.filter(r=>completedHoles(r).length),scores=valid.map(r=>roundStats(r)),allShots=scores.flatMap(s=>s.allShots);const roundUnits=valid.reduce((n,r)=>n+(Number(r.holeCount||r.holes.length)===9?.5:1),0);const perRound=key=>roundUnits?sum(scores.map(s=>s[key]))/roundUnits:0;const fwN=sum(scores.map(s=>s.fwN)),fwD=sum(scores.map(s=>s.fwD)),girN=sum(scores.map(s=>s.girN)),girD=sum(scores.map(s=>s.girD));const full=scores.filter((s,i)=>Number(valid[i].holeCount||valid[i].holes.length)===18&&s.holes===18);return{valid,scores,allShots,rounds:valid.length,avgScore:perRound('total'),best:Math.min(...full.map(s=>s.total),999),avgPutts:perRound('putts'),fw:pct(fwN,fwD),gir:pct(girN,girD),ob:perRound('ob'),pen:perRound('pen')}}
 function monthTrendChart(rs){
@@ -1043,18 +1123,20 @@ function allData(){
   return color+' '+from+'% '+running/Math.max(1,scoreTotal)*100+'%';
  }).join(',');
  const pie=`<div class="score-pie-wrap"><div class="score-pie" style="background:conic-gradient(${stops})"><div class="score-pie-center"><div><strong>${scoreTotal}</strong>H</div></div></div><div class="score-pie-legend">${pieItems.map(([label,v,color])=>`<div class="score-pie-item"><span class="score-pie-name"><span class="score-pie-dot" style="background:${color}"></span>${label}</span><strong>${pct(v,scoreTotal)}%</strong></div>`).join('')}</div></div>`;
- return `<div class="card"><div class="card-title">サマリー</div><div class="grid2">
+ return `<div class="card analysis-summary-card"><div class="card-title">サマリー</div><div class="grid2 analysis-summary-grid">
  <div class="metric"><div class="metric-label">ラウンド数</div><div class="metric-value">${a.rounds}</div></div>
  <div class="metric"><div class="metric-label">平均スコア</div><div class="metric-value orange">${a.avgScore.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">ベストスコア（18Hのみ）</div><div class="metric-value blue">${a.best===999?'—':a.best}</div></div>
  <div class="metric"><div class="metric-label">平均パット数</div><div class="metric-value">${a.avgPutts.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">年間スコア推移</div>${monthTrendChart(rs)}</div>
- <div class="card"><div class="card-title">プレー指標</div><div class="grid2">
+ <h3 class="analysis-section-heading">プレー分析</h3>
+ <div class="card analysis-play-metrics"><div class="card-title">プレー指標</div><div class="grid2">
  <div class="metric"><div class="metric-label">FWキープ率</div><div class="metric-value">${a.fw}%</div></div>
  <div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${a.gir}%</div></div>
  <div class="metric"><div class="metric-label">OB / R</div><div class="metric-value">${a.ob.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">Pen / R</div><div class="metric-value">${a.pen.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">スコア分布</div>${pie}</div>
+ <h3 class="analysis-section-heading">ショット分析</h3>
  <div class="card"><div class="card-title">ショット傾向</div>
  <div class="heat-legend"><span class="heat-key"><span class="heat-swatch heat-low"></span>少ない</span><span class="heat-key"><span class="heat-swatch heat-mid"></span>普通</span><span class="heat-key"><span class="heat-swatch heat-high"></span>多い</span></div>
  ${share3('Par4・Par5 ティーショット方向',dir45,['左','中央','右'])}
@@ -1086,19 +1168,21 @@ function recentData(){
  const pieItems=[['バーディー以下',scoreDist.birdie,'#2F6FE4'],['パー',scoreDist.par,'#DDE5EF'],['ボギー',scoreDist.bogey,'#FFB184'],['ダブルボギー以上',scoreDist.double,'#FF6A24']];
  let running=0;const stops=pieItems.map(([label,v,color])=>{const from=running/Math.max(1,scoreTotal)*100;running+=v;return color+' '+from+'% '+running/Math.max(1,scoreTotal)*100+'%'}).join(',');
  const pie='<div class="score-pie-wrap"><div class="score-pie" style="background:conic-gradient('+stops+')"><div class="score-pie-center"><div><strong>'+scoreTotal+'</strong>H</div></div></div><div class="score-pie-legend">'+pieItems.map(([label,v,color])=>'<div class="score-pie-item"><span class="score-pie-name"><span class="score-pie-dot" style="background:'+color+'"></span>'+label+'</span><strong>'+pct(v,scoreTotal)+'%</strong></div>').join('')+'</div></div>';
- return `<div class="card"><div class="card-title">直近5R サマリー</div><div class="grid2">
+ return `<div class="card analysis-summary-card"><div class="card-title">直近5R サマリー</div><div class="grid2 analysis-summary-grid">
  <div class="metric"><div class="metric-label">ラウンド数</div><div class="metric-value">${a.rounds}</div></div>
  <div class="metric"><div class="metric-label">平均スコア</div><div class="metric-value orange">${a.avgScore.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">ベストスコア（18Hのみ）</div><div class="metric-value blue">${a.best===999?'—':a.best}</div></div>
  <div class="metric"><div class="metric-label">平均パット数</div><div class="metric-value">${a.avgPutts.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">スコア・PUTT推移</div>${stackedChart(rs,st)}</div>
  <div class="card"><div class="card-title">FW・GIR推移</div>${lineChart(rs,st)}</div>
- <div class="card"><div class="card-title">プレー指標</div><div class="grid2">
+ <h3 class="analysis-section-heading">プレー分析</h3>
+ <div class="card analysis-play-metrics"><div class="card-title">プレー指標</div><div class="grid2">
  <div class="metric"><div class="metric-label">FWキープ率</div><div class="metric-value">${a.fw}%</div></div>
  <div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${a.gir}%</div></div>
  <div class="metric"><div class="metric-label">OB / R</div><div class="metric-value">${a.ob.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">Pen / R</div><div class="metric-value">${a.pen.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">スコア分布</div>${pie}</div>
+ <h3 class="analysis-section-heading">ショット分析</h3>
  <div class="card"><div class="card-title">ショット傾向</div>
  <div class="heat-legend"><span class="heat-key"><span class="heat-swatch heat-low"></span>少ない</span><span class="heat-key"><span class="heat-swatch heat-mid"></span>普通</span><span class="heat-key"><span class="heat-swatch heat-high"></span>多い</span></div>
  ${share3('Par4・Par5 ティーショット方向',dir45,['左','中央','右'])}
@@ -1339,6 +1423,7 @@ function onClick(e){
  }
  if(t.dataset.resultId){ui.resultReturnTo=['home','history','data'].includes(ui.screen)?ui.screen:'home';ui.resultFromFinish=false;ui.prev=ui.screen;ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
  if(t.dataset.dataTab){ui.dataTab=t.dataset.dataTab;render();return}
+ if(t.dataset.clubSort){ui.clubSort=t.dataset.clubSort==='count'?'count':'registered';render();return}
  if(t.dataset.clubDetail){ui.prev=ui.screen;ui.clubId=t.dataset.clubDetail;ui.screen='club-detail';render();return}
  if(t.dataset.editField&&ui.modal?.type==='editShot'){toggleSimpleDraftField(ui.modal.draft,t.dataset.editField,t.dataset.value);render();return}
  if(t.dataset.editGood&&ui.modal?.type==='editShot'){ui.modal.draft.goods=toggleArrayValue(ui.modal.draft.goods,t.dataset.editGood);render();return}
