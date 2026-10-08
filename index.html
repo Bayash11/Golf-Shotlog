@@ -122,6 +122,46 @@ button{cursor:pointer}
 .code-preview{width:100%;min-height:300px;max-height:55vh;overflow:auto;background:#111827;color:#D1D5DB;border-radius:14px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .note{background:var(--blue-soft);border-radius:14px;padding:12px;color:#315A9E;font-size:12px;line-height:1.55}
 @media (orientation:landscape) and (min-width:700px){.shell{max-width:100%;}.score-table{min-width:100%;font-size:11px}.nav{max-width:100%}}
+
+/* Compact 9H scorecard */
+.sc-page{padding-top:17px}
+.sc-overview{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 2px 16px}
+.sc-overview>div:first-child{flex:1;min-width:0}
+.sc-overview>div:first-child strong{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-overview small{display:block;margin-top:5px;color:var(--sub);font-size:11px}
+.sc-overview .sc-total{text-align:right;flex-shrink:0}
+.sc-total strong{display:block;font-size:33px;font-weight:850;line-height:1}
+.sc-total small{color:var(--orange);font-weight:800}
+.sc-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:13px;background:#E9EDF3;margin-bottom:13px}
+.sc-switch button{border:0;background:transparent;color:#738092;min-height:42px;border-radius:9px;font-weight:800;font-size:12px}
+.sc-switch button.active{background:#fff;color:var(--orange);box-shadow:0 2px 8px #17203312}
+.sc-section{color:var(--orange);font-weight:800;font-size:13px;margin-bottom:12px}
+.sc-board{background:#fff;border:1px solid #E4EAF1;border-radius:14px;padding:8px 5px;box-shadow:var(--shadow)}
+.sc-grid{display:grid;grid-template-columns:42px repeat(9,minmax(0,1fr));gap:2px}
+.sc-cell{display:flex;align-items:center;justify-content:center;flex-direction:column;min-width:0;min-height:36px;padding:2px 0;font-size:10px;line-height:1.2;text-align:center;font-weight:650;background:#F8F9FB;overflow:hidden}
+.sc-cell.sc-label{background:#ECF0F5;color:#556273;font-weight:800;font-size:9px}
+.sc-cell.sc-head{border:0;background:var(--orange);color:#fff;min-height:39px;font-weight:850;font-size:12px}
+.sc-head-label{font-size:10px!important;border-radius:6px 0 0 6px}
+.sc-cell.sc-under{background:#EAF1FF;color:var(--blue);font-weight:850;font-size:12px}
+.sc-cell.sc-over{background:#FFF0E7;color:#D75617;font-weight:850;font-size:12px}
+.sc-cell.sc-even{background:#F4F6F8;font-weight:850;font-size:12px}
+.sc-cell.sc-yes{color:var(--blue);font-weight:850;font-size:13px}
+.sc-cell.sc-tee{font-size:9px}
+.sc-cell.sc-tee span,.sc-cell.sc-tee small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;font-size:9px}
+.sc-cell.sc-tee small{color:var(--sub)}
+.sc-board-foot{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:12px 5px 3px}
+.sc-board-foot span{font-size:10px;color:var(--sub)}
+.sc-board-foot strong{font-size:12px;white-space:nowrap}
+.sc-board-foot b{font-size:14px;color:var(--orange);margin-left:4px}
+.sc-legend{display:flex;justify-content:center;gap:18px;color:var(--sub);font-size:10px;margin:14px 0 18px}
+.sc-dot{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:middle;margin-right:4px}
+.sc-dot-over{background:#FFF0E7;border:1px solid #FFBC9D}
+.sc-dot-under{background:#EAF1FF;border:1px solid #AAC5FB}
+.sc-summary{background:#fff;border:1px solid #E9EDF3;border-radius:14px;padding:16px}
+.sc-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.sc-stats>div{background:#F5F7FA;border-radius:10px;text-align:center;padding:13px 4px}
+.sc-stats small{display:block;font-size:10px;color:var(--sub);margin-bottom:4px}
+.sc-stats strong{font-size:21px;font-weight:850}
 </style>
 </head>
 <body><div id="app"></div>
@@ -187,16 +227,16 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&v.ve
 function mergeConfig(saved,defs){if(!Array.isArray(saved))return defs;const byLabel=new Map(saved.map(x=>[x?.label,x]));const base=defs.map(x=>{const old=byLabel.get(x.label);return old?{...x,...old,custom:false}:x});const custom=saved.filter(x=>x&&x.custom&&String(x.label||'').trim()&&!base.some(d=>d.label===x.label)).map(x=>({...x,label:String(x.label).trim(),custom:true}));return base.concat(custom)}
 function mergeData(v){const s=defaultSettings(),vs=v.settings||{};return{version:1,settings:{...s,...vs,inputs:{...s.inputs,...(vs.inputs||{})},options:{...s.options,...(vs.options||{})},shotStyles:mergeConfig(vs.shotStyles,s.shotStyles),feedback:{good:mergeConfig(vs.feedback?.good,s.feedback.good),miss:mergeConfig(vs.feedback?.miss,s.feedback.miss)}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
-let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
+let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
 let lastRenderedScreen=ui.screen;
 let lastRenderedPageKey='';
 let historyReady=false;
 if('scrollRestoration' in history)history.scrollRestoration='manual';
 let restoringHistory=false;
-function historyState(){return{shotlog:true,screen:ui.screen,prev:ui.prev,resultReturnTo:ui.resultReturnTo,resultFromFinish:ui.resultFromFinish,scorecardReturnTo:ui.scorecardReturnTo,dataTab:ui.dataTab,viewRoundId:ui.viewRoundId,scorecardRoundId:ui.scorecardRoundId,clubId:ui.clubId}}
+function historyState(){return{shotlog:true,screen:ui.screen,prev:ui.prev,resultReturnTo:ui.resultReturnTo,resultFromFinish:ui.resultFromFinish,scorecardReturnTo:ui.scorecardReturnTo,scorecardHalf:ui.scorecardHalf,dataTab:ui.dataTab,viewRoundId:ui.viewRoundId,scorecardRoundId:ui.scorecardRoundId,clubId:ui.clubId}}
 function applyHistoryState(s){
  if(!s||!s.shotlog){ui.screen='home';ui.prev='home';ui.resultReturnTo='home';ui.resultFromFinish=false;ui.scorecardReturnTo='play';ui.modal=null;return}
- ui.screen=s.screen==='play'&&!data.activeRound?'home':(s.screen||'home');ui.prev=s.prev||'home';ui.resultReturnTo=['home','history','data'].includes(s.resultReturnTo)?s.resultReturnTo:(['home','history','data'].includes(s.prev)?s.prev:'home');ui.resultFromFinish=Boolean(s.resultFromFinish);ui.scorecardReturnTo=s.scorecardReturnTo==='result'?'result':'play';ui.dataTab=s.dataTab||ui.dataTab;ui.viewRoundId=s.viewRoundId||null;ui.scorecardRoundId=s.scorecardRoundId||null;ui.clubId=s.clubId||null;ui.modal=null;
+ ui.screen=s.screen==='play'&&!data.activeRound?'home':(s.screen||'home');ui.prev=s.prev||'home';ui.resultReturnTo=['home','history','data'].includes(s.resultReturnTo)?s.resultReturnTo:(['home','history','data'].includes(s.prev)?s.prev:'home');ui.resultFromFinish=Boolean(s.resultFromFinish);ui.scorecardReturnTo=s.scorecardReturnTo==='result'?'result':'play';ui.scorecardHalf=s.scorecardHalf===1?1:0;ui.dataTab=s.dataTab||ui.dataTab;ui.viewRoundId=s.viewRoundId||null;ui.scorecardRoundId=s.scorecardRoundId||null;ui.clubId=s.clubId||null;ui.modal=null;
 }
 function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
 function mutate(fn){fn();persist();render()}
@@ -516,18 +556,35 @@ function puttInput(r,h){
  return '<div class="shot-card current"><div class="row"><span class="shot-num">'+strokeNo+'</span><div><div class="card-title" style="margin:0">'+(holePutts(h)+1)+' PUTT</div><div class="tiny muted">現在 <span id="putt-current-distance-inline">'+Number(h.currentPuttRemainingM).toFixed(1)+'</span>m</div></div></div>'+firstPuttAdjust+'<div class="divider"></div><div class="label">ライ</div><div class="grid3">'+PUTT_LIE_PRIMARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="grid2" style="margin-top:8px">'+PUTT_LIE_SECONDARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="divider"></div><div class="label">到達位置</div><div class="green-grid">'+cells.map(v=>'<div class="tap-choice '+(v==='Cup-in'?'cup ':'')+(d.cell===v?'active':'')+'" data-putt-cell="'+v+'">'+v+'</div>').join('')+'</div><div id="putt-distance-section" '+(d.cell==='Cup-in'?'hidden':'')+'><div class="divider"></div><div class="label">パット後の残り距離</div><div class="quick" style="margin-bottom:9px">'+PUTT_DISTANCE_PRESETS.map(v=>'<div class="tap-choice '+(Number(d.afterM)===Number(v)?'active':'')+'" data-putt-after="'+v+'">'+v+'m</div>').join('')+'</div><div class="stepper"><div class="tap-choice" data-putt-step="-0.5">−</div><div class="step-val">'+Number(d.afterM||0).toFixed(1)+'m</div><div class="tap-choice" data-putt-step="0.5">＋</div></div><div class="row" style="margin-top:9px"><input class="input" id="putt-after-custom" type="number" step="0.5" inputmode="decimal" placeholder="その他の距離"><span class="small muted">m</span></div></div><div class="divider"></div><button class="primary" id="save-putt-button" data-action="save-putt">'+(d.cell==='Cup-in'?'Cup-in・ホールアウト':'パットを記録')+'</button></div>';
 }
 function completedHoleView(r,h){const last=h.number>=r.holeCount;return`<div class="card"><div class="card-title">${h.number}H 完了</div><div class="grid3"><div class="metric"><div class="metric-label">Score</div><div class="metric-value orange">${holeScore(h)}</div></div><div class="metric"><div class="metric-label">PUTT</div><div class="metric-value blue">${holePutts(h)}</div></div><div class="metric"><div class="metric-label">To Par</div><div class="metric-value">${scoreLabel(holeScore(h)-h.par)}</div></div></div><div class="grid2" style="margin-top:12px"><button class="secondary" data-action="open-current-hole-shots">ショット編集</button><button class="secondary" data-action="open-scorecard">スコアカード</button></div>${last?`<button class="primary" style="margin-top:12px" data-action="finish-round">ラウンド結果へ</button>`:`<button class="primary" style="margin-top:12px" data-action="next-hole">${h.number+1}Hへ</button>`}</div>`}
+function scorecardHeader(){return `<header class="settings-fixed-header"><button class="settings-back" data-go="${ui.scorecardReturnTo||'play'}">‹ 戻る</button><div class="settings-head-title">スコアカード</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 function scorecard(){
- const r=roundById(ui.scorecardRoundId)||currentRound(); if(!r)return''; const s=roundStats(r); const holes=r.holes; const front=holes.slice(0,9),back=holes.slice(9,18);
- const out=sum(front.map(h=>holeScore(h)||0)),inn=sum(back.map(h=>holeScore(h)||0));
- const outPar=sum(front.map(h=>h.par)),inPar=sum(back.map(h=>h.par));
- const colHeaders=[]; front.forEach(h=>colHeaders.push(`<th data-hole-sheet="${h.number}">${h.number}</th>`)); colHeaders.push('<th class="total-col">OUT</th>'); back.forEach(h=>colHeaders.push(`<th data-hole-sheet="${h.number}">${h.number}</th>`)); if(back.length)colHeaders.push('<th class="total-col">IN</th>'); colHeaders.push('<th>TOTAL</th>');
- const cells=(fn,summaryFn)=>{let a=front.map(h=>`<td>${fn(h)}</td>`);a.push(`<td><strong>${summaryFn(front,'out')}</strong></td>`);if(back.length){a=a.concat(back.map(h=>`<td>${fn(h)}</td>`));a.push(`<td><strong>${summaryFn(back,'in')}</strong></td>`)}a.push(`<td><strong>${summaryFn(holes,'total')}</strong></td>`);return a.join('')};
- const row=(label,fn,summaryFn)=>`<tr><td>${label}</td>${cells(fn,summaryFn)}</tr>`;
- const simpleSum=(arr)=>sum(arr.map(h=>Number(holeScore(h)||0))); const puttSum=arr=>sum(arr.map(h=>holePutts(h))); const parSum=arr=>sum(arr.map(h=>h.par)); const fwSum=arr=>{let n=0,d=0;arr.forEach(h=>{const t=h.shots.find(x=>x.type==='shot');if(h.par>3&&t){d++;if(t.landing==='FW')n++}});return d?`${n}/${d}`:'—'}; const girSum=arr=>{let n=0;arr.forEach(h=>{const sh=h.shots.filter(x=>x.type==='shot'),i=sh.findIndex(x=>x.landing==='Green');if(i>=0&&i+1<=Math.max(1,h.par-2))n++});return `${n}/${arr.filter(h=>h.status==='done').length||arr.length}`};
- return`${header('スコアカード',ui.scorecardReturnTo||'play')}<div class="page"><div class="card small"><strong>${esc(r.courseName)}</strong><div class="muted tiny" style="margin-top:4px">${esc(r.date)} · ${esc(r.tee)} · ${esc(r.green||'')}</div></div><div class="score-wrap"><table class="score-table"><thead><tr><th>項目</th>${colHeaders.join('')}</tr></thead><tbody>
- ${row('Par',h=>h.par,arr=>parSum(arr))}${row('Score',h=>{const v=holeScore(h);return v==null?'':`<strong class="${v-h.par<=0?'score-good':'score-bad'}">${v}</strong>`},arr=>simpleSum(arr)||'—')}${row('Putt',h=>holePutts(h)||'',arr=>puttSum(arr)||'—')}${row('FW',h=>{const t=h.shots.find(x=>x.type==='shot');return h.par>3&&t?(t.landing==='FW'?'○':'–'):''},arr=>fwSum(arr))}${row('GIR',h=>{const sh=h.shots.filter(x=>x.type==='shot');const i=sh.findIndex(x=>x.landing==='Green');return i>=0&&i+1<=Math.max(1,h.par-2)?'○':(h.status==='done'?'–':'')},arr=>girSum(arr))}${row('Tee',h=>{const t=h.shots.find(x=>x.type==='shot');return t?`${esc(t.club||'')} ${esc(t.direction||'')}`:''},()=> '—')}${row('Bunker',h=>h.shots.some(x=>x.landing==='バンカー')?'1':'',arr=>sum(arr.map(h=>h.shots.filter(x=>x.landing==='バンカー').length))||'—')}${row('OB',h=>h.shots.filter(x=>x.landing==='OB').length||'',arr=>sum(arr.map(h=>h.shots.filter(x=>x.landing==='OB').length))||'—')}${row('Pen',h=>holePenalty(h)||'',arr=>sum(arr.map(h=>holePenalty(h)))||'—')}
- </tbody></table></div>
- <div class="note" style="margin-top:14px">ホール番号をタップすると、そのホールのショットを確認できます。</div>${r!==data.activeRound?`<button class="primary" style="margin-top:14px" data-result-id="${r.id}">結果サマリーへ</button>`:''}</div>`}
+ const r=roundById(ui.scorecardRoundId)||currentRound();if(!r)return'';
+ const st=roundStats(r),holes=r.holes,hasBack=holes.length>9,half=hasBack&&ui.scorecardHalf===1?1:0;
+ const sections=Array.isArray(r.sections)?r.sections:['OUT','IN'],front=sections[0]||'OUT',back=sections[1]||'IN';
+ const shown=holes.slice(half*9,half*9+9),finished=shown.filter(h=>holeScore(h)!=null),halfScore=sum(finished.map(h=>holeScore(h))),halfPar=sum(finished.map(h=>h.par));
+ const fw=h=>{const sh=h.shots.find(x=>x.type==='shot');return h.par===3?'—':sh?(sh.landing==='FW'?'○':'×'):'—'};
+ const gir=h=>{const sh=h.shots.filter(x=>x.type==='shot'),i=sh.findIndex(x=>x.landing==='Green');return i>=0&&i+1<=Math.max(1,h.par-2)?'○':(holeScore(h)!=null?'×':'—')};
+ const rows=[
+  ['Par',h=>h.par],['Yard',h=>h.distance],
+  ['Score',h=>holeScore(h)??'—'],['PUTT',h=>h.shots.length||holeScore(h)!=null?holePutts(h):'—'],
+  ['FW',fw],['GIR',gir],
+  ['Tee',h=>{const tee=h.shots.find(x=>x.type==='shot');return tee?`<span>${esc(tee.club||'—')}</span><small>${esc(shotDirectionText(tee)||'')}</small>`:'—'}],
+  ['Bunker',h=>h.shots.length||holeScore(h)!=null?h.shots.filter(x=>x.landing==='バンカー').length:'—'],
+  ['OB',h=>h.shots.length||holeScore(h)!=null?h.shots.filter(x=>x.landing==='OB').length:'—'],
+  ['Pen',h=>h.shots.length||holeScore(h)!=null?holePenalty(h):'—']
+ ];
+ const head=`<div class="sc-cell sc-head sc-head-label">H</div>${shown.map(h=>`<button type="button" class="sc-cell sc-head" data-hole-sheet="${h.number}" aria-label="${h.number}ホールの履歴">${h.number}</button>`).join('')}`;
+ const body=rows.map(([label,fn])=>`<div class="sc-cell sc-label">${label}</div>${shown.map(h=>{const v=fn(h),score=holeScore(h),cls=label==='Score'&&score!=null?(score<h.par?' sc-under':score>h.par?' sc-over':' sc-even'):(['FW','GIR'].includes(label)&&v==='○'?' sc-yes':'');return `<div class="sc-cell${label==='Tee'?' sc-tee':''}${cls}">${v}</div>`}).join('')}`).join('');
+ const total=st.holes?st.total:'—',diff=st.holes?scoreLabel(st.diff):'—';
+ return `${scorecardHeader()}<div class="page sc-page">
+  <div class="sc-overview"><div><strong>${esc(r.courseName||'ラウンド')}</strong><small>${esc(r.date)} · ${esc(r.tee)} · ${holes.length}H${r.green?' · '+esc(r.green):''}</small></div><div class="sc-total"><strong>${total}</strong><small>TOTAL ${diff}</small></div></div>
+  ${hasBack?`<div class="sc-switch"><button class="${half===0?'active':''}" data-scorecard-half="0">${esc(front)} · 1〜9H</button><button class="${half===1?'active':''}" data-scorecard-half="1">${esc(back)} · 10〜18H</button></div>`:`<div class="sc-section">${esc(front)} · 1〜9H</div>`}
+  <div class="sc-board"><div class="sc-grid">${head}${body}</div><div class="sc-board-foot"><span>ホール番号でショット履歴を表示</span><strong>${esc(half?back:front)} <b>${finished.length?halfScore:'—'}</b>${finished.length?' ('+scoreLabel(halfScore-halfPar)+')':''}</strong></div></div>
+  <div class="sc-legend"><span><i class="sc-dot sc-dot-over"></i>ボギー以上</span><span><i class="sc-dot sc-dot-under"></i>バーディー以下</span></div>
+  <div class="sc-summary"><div class="card-title">ラウンドサマリー</div><div class="sc-stats"><div><small>PUTT</small><strong>${st.holes?st.putts:'—'}</strong></div><div><small>FWキープ</small><strong>${st.fwD?st.fw+'%':'—'}</strong></div><div><small>GIR</small><strong>${st.girD?st.gir+'%':'—'}</strong></div></div></div>
+  ${ui.scorecardReturnTo==='result'&&r!==data.activeRound?'<button class="secondary" style="width:100%;margin-top:15px" data-go="result">結果サマリーへ戻る</button>':''}
+ </div>`;
+}
 function resultHeader(back='history'){return`<header class="result-fixed-header"><button class="result-back" data-go="${back}">‹ 戻る</button><div class="result-head-title">ラウンド結果</div><div class="result-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 function resultScoreChart(r){
  const done=r.holes.filter(h=>h.status==='done'),W=360,H=198,L=34,R=12,T=22,B=32;
@@ -870,6 +927,7 @@ function onClick(e){
  if(t.dataset.puttAfter){mutatePuttDraftInPlace(()=>{currentHole().puttDraft.afterM=Number(t.dataset.puttAfter)});return}
  if(t.dataset.puttStep){mutatePuttDraftInPlace(()=>{const d=currentHole().puttDraft;d.afterM=Math.max(.5,Math.round((Number(d.afterM||.5)+Number(t.dataset.puttStep))*2)/2)});return}
  if(t.dataset.puttCurrentStep){const h=currentHole();if(h&&holePutts(h)===0){h.currentPuttRemainingM=Math.max(.5,Math.round((Number(h.currentPuttRemainingM||.5)+Number(t.dataset.puttCurrentStep))*2)/2);persist();const main=document.getElementById('putt-current-distance');if(main)main.textContent=Number(h.currentPuttRemainingM).toFixed(1)+'m';const inline=document.getElementById('putt-current-distance-inline');if(inline)inline.textContent=Number(h.currentPuttRemainingM).toFixed(1)}return}
+ if(t.dataset.scorecardHalf!==undefined){ui.scorecardHalf=Number(t.dataset.scorecardHalf)===1?1:0;render();return}
  if(t.dataset.holeSheet){const r=roundById(ui.scorecardRoundId)||currentRound();ui.modal={type:'holeSheet',roundId:r.id,hole:Number(t.dataset.holeSheet)};render();return}
  if(t.dataset.clubMoveDraft!==undefined){const i=Number(t.dataset.clubMoveDraft),j=i+Number(t.dataset.dir);if(ui.clubDraft&&j>=0&&j<ui.clubDraft.length){const x=ui.clubDraft[i];ui.clubDraft[i]=ui.clubDraft[j];ui.clubDraft[j]=x;render()}return}
  if(t.dataset.clubDeleteDraft!==undefined){const i=Number(t.dataset.clubDeleteDraft);if(ui.clubDraft){ui.clubDraft.splice(i,1);render()}return}
@@ -894,8 +952,8 @@ function onClick(e){
  else if(a==='save-edit-shot'){const r=currentRound(),h=r?.holes.find(x=>x.number===Number(ui.modal?.hole)),idx=Number(ui.modal?.index),sh=h?.shots?.[idx],d=ui.modal?.draft;if(h&&sh&&d){const last=h.shots[h.shots.length-1],manual=h.status==='done'&&!(last?.type==='putt'&&Number(last.puttAfterM)===0),manualScore=h.score;if(sh.type==='putt'){const custom=document.getElementById('edit-putt-after-custom');if(custom&&custom.value!=='')d.afterM=Number(custom.value);sh.puttLie=[...(d.lie||['フラット'])];sh.puttCell=d.cell;sh.puttAfterM=d.cell==='Cup-in'?0:Number(d.afterM||0)}else{const rem=document.getElementById('edit-shot-remaining'),dist=document.getElementById('edit-shot-distance');if(rem)d.remainingAfterY=rem.value;if(dist)d.directDistance=dist.value;Object.assign(sh,{club:d.club,directionMode:d.directionMode,direction:d.direction,greenCell:d.greenCell,flight:d.flight,goods:[...d.goods],misses:[...d.misses],quality:d.misses.length?'ミス':(d.goods.length?'Good':''),feel:feelArray(d.feel),shotType:d.shotType,slope:slopeArray(d.slope),lie:d.lie,landing:d.landing,penalty:Number(d.penalty||0),remainingAfterY:d.remainingAfterY});const direct=Number(d.directDistance),before=Number(sh.remainingBeforeY||0),after=Number(d.remainingAfterY);sh.shotDistance=direct||(Number.isFinite(after)?Math.max(0,before-after):sh.shotDistance);sh.estimatedDistance=!direct}syncHoleAfterShotChange(h,manual,manualScore);ui.modal=null;persist();render();toast('ショットを修正しました')}}
  else if(a==='memo'){ui.modal={type:'memo'};render()}
  else if(a==='save-memo'){mutate(()=>{currentHole().memo=document.getElementById('memo-text')?.value||'';ui.modal=null})}
- else if(a==='open-scorecard'){ui.prev='play';ui.scorecardReturnTo='play';ui.scorecardRoundId=currentRound().id;ui.screen='scorecard';render();resetViewportTop()}
- else if(a==='scorecard-from-result'){ui.prev='result';ui.scorecardReturnTo='result';ui.scorecardRoundId=t.dataset.id;ui.screen='scorecard';render();resetViewportTop()}
+ else if(a==='open-scorecard'){ui.prev='play';ui.scorecardReturnTo='play';ui.scorecardRoundId=currentRound().id;ui.scorecardHalf=0;ui.screen='scorecard';render();resetViewportTop()}
+ else if(a==='scorecard-from-result'){ui.prev='result';ui.scorecardReturnTo='result';ui.scorecardRoundId=t.dataset.id;ui.scorecardHalf=0;ui.screen='scorecard';render();resetViewportTop()}
  else if(a==='save-shot'){mutate(()=>saveShot(false))}
  else if(a==='skip-shot'){mutate(()=>saveShot(true))}
  else if(a==='manual-holeout'){ui.modal={type:'manualHoleout'};render()}
