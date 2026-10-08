@@ -1272,6 +1272,47 @@ function onClick(e){
  const a=t.dataset.action;
  if(a==='toggle-hole-sheet-shot'&&ui.modal?.type==='holeSheet'){const i=Number(t.dataset.shotIndex),scroll=document.querySelector('.hole-sheet-body')?.scrollTop||0;ui.modal.expanded=ui.modal.expanded===i?null:i;render();const body=document.querySelector('.hole-sheet-body');if(body)body.scrollTop=scroll;return}
  if(a==='hole-sheet-change'&&ui.modal?.type==='holeSheet'){const m=ui.modal,r=roundById(m.roundId),idx=r?.holes.findIndex(h=>h.number===m.hole),j=idx+Number(t.dataset.dir);if(r&&idx>=0&&j>=0&&j<r.holes.length){m.hole=r.holes[j].number;m.expanded=null;if(ui.screen==='scorecard'){const selectedHalf=j>=9?1:0;if(ui.scorecardHalf!==selectedHalf){ui.scorecardHalf=selectedHalf;render();scorecardScrollToHalf(selectedHalf,'auto')}else render()}else render()}return}
+ if(a==='logo-home'){
+  if(ui.screen==='start'){readStartForm()}
+  if(['start','play'].includes(ui.screen)){ui.modal={type:'confirmLogoHome'};render()}
+  else{ui.modal=null;ui.prev=ui.screen;ui.screen='home';render()}
+  return;
+ }
+ if(a==='confirm-logo-home'){ui.modal=null;ui.prev=ui.screen;ui.screen='home';render();return}
+ if(a==='course-manager-add'){ui.modal={type:'courseManagerEdit',id:null,name:''};render();return}
+ if(a==='course-manager-edit'){const c=data.courses.find(x=>x.id===t.dataset.id);if(c){ui.modal={type:'courseManagerEdit',id:c.id,name:c.name};render()}return}
+ if(a==='course-manager-delete'){ui.modal={type:'courseManagerDelete',id:t.dataset.id};render();return}
+ if(a==='course-manager-save'){
+  const name=String(document.getElementById('course-manager-name')?.value||'').trim();
+  if(!name){toast('ゴルフ場名を入力してください');return}
+  const id=ui.modal?.id;
+  if(data.courses.some(x=>x.name===name&&x.id!==id)){toast('同じ名前のゴルフ場が登録されています');return}
+  if(id){const c=data.courses.find(x=>x.id===id);if(!c)return;c.name=name}
+  else{const c=defaultCourse();c.name=name;data.courses.push(c)}
+  ui.modal=null;persist();render();toast('ゴルフ場を保存しました');return;
+ }
+ if(a==='course-manager-delete-confirm'){
+  const id=ui.modal?.id;
+  data.courses=data.courses.filter(c=>c.id!==id);
+  if(ui.start.courseId===id)ui.start.courseId=data.courses[0]?.id||'';
+  ui.modal=null;persist();render();toast('登録一覧から削除しました');return;
+ }
+ if(a==='backup-copy'){try{copyText(backupJson())}catch(error){console.error(error);toast('JSONを作成できませんでした')}return}
+ if(a==='backup-download'){downloadBackup();return}
+ if(a==='start-course-mode'){
+  readStartForm();saveCourseFields();
+  if(t.dataset.value==='new')ui.start.courseId='';
+  else ui.start.courseId=data.courses[0]?.id||'';
+  const c=data.courses.find(x=>x.id===ui.start.courseId);
+  if(c)applyStartCourse(c);
+  ui.courseEditHalf=0;render();return;
+ }
+ if(a==='start-hole-count'){
+  readStartForm();saveCourseFields();
+  ui.start.holeCount=Number(t.dataset.value)===9?9:18;
+  if(ui.start.holeCount===9)ui.courseEditHalf=0;
+  render();return;
+ }
  if(a==='new-round'){ui.screen='start';render()}
  else if(a==='resume-round'){ui.screen='play';render();resetViewportTop()}
  else if(a==='discard-active-round'){if(data.activeRound){ui.modal={type:'confirmDiscardRound'};render()}}
