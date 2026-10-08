@@ -533,7 +533,100 @@ function historyPage(){const rs=[...data.rounds].sort((a,b)=>String(b.date).loca
 function dataPage(){return`<div class="page home-page"><div class="brand small"><span class="shot">Shot</span> <span class="log">log</span></div><div class="section-head"><h2>データ分析</h2></div><div class="tabline">${[['all','全期間'],['recent','直近5R'],['round','ラウンド別'],['club','クラブ別']].map(([k,l])=>`<button class="${ui.dataTab===k?'active':''}" data-data-tab="${k}">${l}</button>`).join('')}</div>${dataTabContent()}</div>`}
 function dataTabContent(){if(ui.dataTab==='recent')return recentData();if(ui.dataTab==='round')return roundData();if(ui.dataTab==='club')return clubData();return allData()}
 function aggregateRounds(rs){const valid=rs.filter(r=>completedHoles(r).length),scores=valid.map(r=>roundStats(r)),allShots=scores.flatMap(s=>s.allShots);const roundUnits=valid.reduce((n,r)=>n+(Number(r.holeCount||r.holes.length)===9?.5:1),0);const perRound=key=>roundUnits?sum(scores.map(s=>s[key]))/roundUnits:0;const fwN=sum(scores.map(s=>s.fwN)),fwD=sum(scores.map(s=>s.fwD)),girN=sum(scores.map(s=>s.girN)),girD=sum(scores.map(s=>s.girD));const full=scores.filter((s,i)=>Number(valid[i].holeCount||valid[i].holes.length)===18&&s.holes===18);return{valid,scores,allShots,rounds:valid.length,avgScore:perRound('total'),best:Math.min(...full.map(s=>s.total),999),avgPutts:perRound('putts'),fw:pct(fwN,fwD),gir:pct(girN,girD),ob:perRound('ob'),pen:perRound('pen')}}
-function allData(){const a=aggregateRounds(data.rounds);if(!a.rounds)return'<div class="empty">データがありません。</div>';const d=freq(a.allShots,x=>x.directionMode==='green'?mapGreenToLR(x.greenCell):x.direction,['左','中央','右']);const f=freq(a.allShots,'flight',['ドロー','ストレート','フェード']);const good=a.allShots.filter(x=>shotHasGood(x)).length,miss=a.allShots.filter(x=>shotHasMiss(x)).length;return`<div class="card"><div class="card-title">サマリー</div><div class="grid2"><div class="metric"><div class="metric-label">ラウンド数</div><div class="metric-value">${a.rounds}</div></div><div class="metric"><div class="metric-label">平均スコア</div><div class="metric-value orange">${a.avgScore.toFixed(1)}</div></div><div class="metric"><div class="metric-label">ベスト</div><div class="metric-value blue">${a.best===999?'—':a.best}</div></div><div class="metric"><div class="metric-label">平均PUTT</div><div class="metric-value">${a.avgPutts.toFixed(1)}</div></div></div></div><div class="card"><div class="card-title">プレー傾向</div><div class="grid2"><div class="metric"><div class="metric-label">FW</div><div class="metric-value">${a.fw}%</div></div><div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${a.gir}%</div></div><div class="metric"><div class="metric-label">OB / R</div><div class="metric-value">${a.ob.toFixed(1)}</div></div><div class="metric"><div class="metric-label">Pen / R</div><div class="metric-value">${a.pen.toFixed(1)}</div></div></div></div><div class="card"><div class="card-title">ショット傾向</div>${threeBar('方向',d,['左','中央','右'],'dir')}${threeBar('球筋',f,['ドロー','ストレート','フェード'],'flight')}</div>${((enabledFeedback('good').length||enabledFeedback('miss').length)||good||miss)?`<div class="card"><div class="card-title">Good / ミス</div><div class="grid2"><div class="metric"><div class="metric-label">Good</div><div class="metric-value orange">${pct(good,good+miss)}%</div></div><div class="metric"><div class="metric-label">ミス</div><div class="metric-value blue">${pct(miss,good+miss)}%</div></div></div></div>`:''}`}
+function monthTrendChart(rs){
+ const byMonth=new Map();
+ rs.forEach(r=>{
+  const m=String(r.date||'').match(/^(\d{4})[-/](\d{1,2})(?:[-/]|$)/);
+  if(!m||Number(m[2])<1||Number(m[2])>12)return;
+  const key=m[1]+'-'+String(Number(m[2])).padStart(2,'0');
+  if(!byMonth.has(key))byMonth.set(key,[]);
+  byMonth.get(key).push(r);
+ });
+ const months=[...byMonth.keys()].sort().map(key=>{
+  const a=aggregateRounds(byMonth.get(key));
+  return {key,score:a.avgScore,putts:a.avgPutts,rounds:a.rounds};
+ });
+ if(!months.length)return'<div class="empty">日付のあるラウンドがありません。</div>';
+ const W=Math.max(330,months.length*68+54),H=320,L=38,R=18;
+ const x=i=>months.length===1?W/2:L+(W-L-R)*i/(months.length-1);
+ let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:none" role="img" aria-label="月別の平均スコアと平均パット数の折れ線グラフ">`;
+ const panel=(key,label,color,top)=>{
+  const vals=months.map(m=>m[key]),rawMin=Math.min(...vals),rawMax=Math.max(...vals);
+  const pad=Math.max(2,(rawMax-rawMin)*.18),min=Math.max(0,Math.floor(rawMin-pad)),max=Math.ceil(rawMax+pad);
+  const bottom=top+92,span=Math.max(1,max-min);
+  const y=v=>bottom-(v-min)/span*92;
+  let v=`<text x="${L}" y="${top-11}" font-size="11" font-weight="750" fill="${color}">${label}</text>`;
+  [0,.5,1].forEach(f=>{
+   const val=min+(max-min)*f,yy=y(val);
+   v+=`<line class="chart-grid" x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}"/><text x="3" y="${yy+3}" font-size="9" fill="#667085">${val.toFixed(0)}</text>`;
+  });
+  if(months.length>1)v+=`<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${vals.map((n,i)=>x(i)+','+y(n)).join(' ')}"/>`;
+  vals.forEach((n,i)=>{
+   const xx=x(i),yy=y(n);
+   v+=`<circle cx="${xx}" cy="${yy}" r="4.5" fill="${color}"><title>${months[i].key} ${label}: ${n.toFixed(1)}（${months[i].rounds}R）</title></circle><text x="${xx}" y="${Math.max(top+9,yy-9)}" text-anchor="middle" font-size="10" font-weight="700" fill="${color}">${n.toFixed(1)}</text>`;
+  });
+  return v;
+ };
+ svg+=panel('score','平均スコア','#FF6A24',42);
+ svg+=panel('putts','平均PUTT','#2F6FE4',192);
+ months.forEach((m,i)=>{svg+=`<text x="${x(i)}" y="308" text-anchor="middle" font-size="10" fill="#667085">${m.key.slice(2).replace('-','/')}</text>`});
+ svg+='</svg>';
+ return `<div class="card-sub" style="margin-bottom:8px">月別平均（9Hは0.5R換算）・左右にスクロールできます</div><div style="overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch">${svg}</div>`;
+}
+function allData(){
+ const rs=data.rounds.filter(r=>completedHoles(r).length);
+ const a=aggregateRounds(rs);
+ if(!a.rounds)return'<div class="empty">データがありません。</div>';
+ const st=rs.map(r=>roundStats(r)),all=a.allShots;
+ const scoreDist={birdie:0,par:0,bogey:0,double:0};
+ st.forEach(s=>Object.keys(scoreDist).forEach(k=>scoreDist[k]+=s.scoreDist[k]||0));
+ const tee45=rs.flatMap(r=>completedHoles(r).filter(h=>h.par===4||h.par===5).map(h=>h.shots.find(x=>x.type==='shot')).filter(Boolean));
+ const dir45=freq(tee45,x=>x.directionMode==='green'?mapGreenToLR(x.greenCell):x.direction,['左','中央','右']);
+ const tee3=rs.flatMap(r=>completedHoles(r).filter(h=>h.par===3).map(h=>h.shots.find(x=>x.type==='shot')).filter(Boolean));
+ const p3={},putt={};
+ GREEN_CELLS.forEach(k=>{p3[k]=0;putt[k]=0});
+ tee3.forEach(x=>{const k=x.directionMode==='green'?(x.greenCell||'中央'):({左:'左',中央:'中央',右:'右'}[x.direction]||'中央');if(k in p3)p3[k]++});
+ rs.flatMap(r=>completedHoles(r).flatMap(h=>h.shots||[])).filter(x=>x.type==='putt'&&x.puttCell!=='Cup-in').forEach(x=>{if(x.puttCell in putt)putt[x.puttCell]++});
+ const fl=freq(all,'flight',['ドロー','ストレート','フェード']);
+ const clubs={},misses={};
+ all.forEach(x=>{
+  if(x.club)clubs[x.club]=(clubs[x.club]||0)+1;
+  (x.misses||[]).forEach(m=>misses[m]=(misses[m]||0)+1);
+ });
+ const good=all.filter(x=>shotHasGood(x)).length,miss=all.filter(x=>shotHasMiss(x)).length;
+ const scoreTotal=sum(Object.values(scoreDist));
+ const pieItems=[['バーディー以下',scoreDist.birdie,'#2F6FE4'],['パー',scoreDist.par,'#DDE5EF'],['ボギー',scoreDist.bogey,'#FFB184'],['ダブルボギー以上',scoreDist.double,'#FF6A24']];
+ let running=0;
+ const stops=pieItems.map(([label,v,color])=>{
+  const from=running/Math.max(1,scoreTotal)*100;
+  running+=v;
+  return color+' '+from+'% '+running/Math.max(1,scoreTotal)*100+'%';
+ }).join(',');
+ const pie=`<div class="score-pie-wrap"><div class="score-pie" style="background:conic-gradient(${stops})"><div class="score-pie-center"><div><strong>${scoreTotal}</strong>H</div></div></div><div class="score-pie-legend">${pieItems.map(([label,v,color])=>`<div class="score-pie-item"><span class="score-pie-name"><span class="score-pie-dot" style="background:${color}"></span>${label}</span><strong>${pct(v,scoreTotal)}%</strong></div>`).join('')}</div></div>`;
+ return `<div class="card"><div class="card-title">サマリー</div><div class="grid2">
+ <div class="metric"><div class="metric-label">ラウンド数</div><div class="metric-value">${a.rounds}</div></div>
+ <div class="metric"><div class="metric-label">平均スコア</div><div class="metric-value orange">${a.avgScore.toFixed(1)}</div></div>
+ <div class="metric"><div class="metric-label">ベストスコア（18Hのみ）</div><div class="metric-value blue">${a.best===999?'—':a.best}</div></div>
+ <div class="metric"><div class="metric-label">平均パット数</div><div class="metric-value">${a.avgPutts.toFixed(1)}</div></div></div></div>
+ <div class="card"><div class="card-title">年間スコア推移</div>${monthTrendChart(rs)}</div>
+ <div class="card"><div class="card-title">プレー指標</div><div class="grid2">
+ <div class="metric"><div class="metric-label">FWキープ率</div><div class="metric-value">${a.fw}%</div></div>
+ <div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${a.gir}%</div></div>
+ <div class="metric"><div class="metric-label">OB / R</div><div class="metric-value">${a.ob.toFixed(1)}</div></div>
+ <div class="metric"><div class="metric-label">Pen / R</div><div class="metric-value">${a.pen.toFixed(1)}</div></div></div></div>
+ <div class="card"><div class="card-title">スコア分布</div>${pie}</div>
+ <div class="card"><div class="card-title">ショット傾向</div>
+ <div class="heat-legend"><span class="heat-key"><span class="heat-swatch heat-low"></span>少ない</span><span class="heat-key"><span class="heat-swatch heat-mid"></span>普通</span><span class="heat-key"><span class="heat-swatch heat-high"></span>多い</span></div>
+ ${share3('Par4・Par5 ティーショット方向',dir45,['左','中央','右'])}
+ ${heat9('Par3 方向（9マス）',p3)}
+ ${share3('球筋',fl,['ドロー','ストレート','フェード'])}
+ ${heat9('パター 到達位置（Cup-in除外）',putt,true)}</div>
+ <div class="card"><div class="card-title">クラブ使用数</div>${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(clubs),1))).join('')||'<div class="empty">データなし</div>'}</div>
+ ${((enabledFeedback('good').length||enabledFeedback('miss').length)||good||miss)?`<div class="card"><div class="card-title">Good / ミス</div><div class="grid2">
+ <div class="metric"><div class="metric-label">Good</div><div class="metric-value orange">${pct(good,good+miss)}%</div></div>
+ <div class="metric"><div class="metric-label">ミス</div><div class="metric-value blue">${pct(miss,good+miss)}%</div></div></div><div class="divider"></div>
+ ${Object.entries(misses).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(misses),1))).join('')||'<div class="small muted">ミス内訳なし</div>'}</div>`:''}`;
+}
 function recentData(){
  const rs=[...data.rounds].filter(r=>completedHoles(r).length).sort((a,b)=>String(a.date).localeCompare(String(b.date))).slice(-5);
  if(!rs.length)return'<div class="empty">データがありません。</div>';
