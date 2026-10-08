@@ -1145,6 +1145,21 @@ function modal(){if(!ui.modal)return'';const m=ui.modal;if(m.type==='memo'){cons
  if(m.type==='addStyle'){return`<div class="modal-back"><div class="modal-card"><div class="card-title">独自の打ち方を追加</div><input class="input" id="custom-style-name" maxlength="20" placeholder="打ち方名を入力" autofocus><div class="grid2" style="margin-top:12px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" data-action="add-style-confirm">追加</button></div></div></div>`}
  if(m.type==='addFeedback'){return`<div class="modal-back"><div class="modal-card"><div class="card-title">独自の${ui.feedbackTab==='good'?'Good':'ミス'}項目を追加</div><input class="input" id="custom-feedback-name" maxlength="20" placeholder="項目名を入力" autofocus><div class="grid2" style="margin-top:12px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" data-action="add-feedback-confirm">追加</button></div></div></div>`}
  if(m.type==='confirmDiscardRound'){const r=data.activeRound;return`<div class="modal-back"><div class="modal-card"><div class="card-title danger">途中ラウンドを削除しますか？</div><div class="card-sub">${r?`${esc(r.courseName)} / ${r.holes[r.currentHoleIndex]?.number||1}H までの途中データを削除します。`:'途中ラウンドのデータを削除します。'}<br>この操作は取り消せません。</div><button class="primary" style="background:var(--error);margin-top:16px" data-action="confirm-discard-active-round">途中ラウンドを削除</button><button class="header-btn" style="width:100%;margin-top:6px" data-action="close-modal">キャンセル</button></div></div>`}
+ if(m.type==='confirmLogoHome'){
+  return '<div class="modal-back"><div class="modal-card"><div class="card-title">ホームへ戻りますか？</div><div class="card-sub">'
+  +(ui.screen==='play'?'途中ラウンドは保存されており、ホームから再開できます。':'開始前の入力内容は保存されません。')
+  +'</div><div class="grid2" style="margin-top:16px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" data-action="confirm-logo-home">ホームへ戻る</button></div></div></div>';
+ }
+ if(m.type==='courseManagerEdit'){
+  return '<div class="modal-back"><div class="modal-card"><div class="card-title">'+(m.id?'ゴルフ場名を編集':'新しいゴルフ場を追加')+'</div><div class="card-sub">ゴルフ場名を入力してください。過去のラウンド記録には影響しません。</div>'
+   +'<div class="field" style="margin-top:14px"><div class="label">ゴルフ場名</div><input class="input" id="course-manager-name" maxlength="80" placeholder="例：〇〇カントリークラブ" value="'+esc(m.name||'')+'"></div>'
+   +'<div class="grid2" style="margin-top:14px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" data-action="course-manager-save">保存</button></div></div></div>';
+ }
+ if(m.type==='courseManagerDelete'){
+  const c=data.courses.find(x=>x.id===m.id);
+  return '<div class="modal-back"><div class="modal-card"><div class="card-title danger">ゴルフ場を削除しますか？</div><div class="card-sub">「'+esc(c?.name||'')+'」を登録一覧から削除します。過去のラウンド記録は残ります。</div>'
+   +'<div class="grid2" style="margin-top:14px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" style="background:var(--error)" data-action="course-manager-delete-confirm">削除する</button></div></div></div>';
+ }
  if(m.type==='confirmClear'){return`<div class="modal-back"><div class="modal-card"><div class="card-title danger">全データを削除しますか？</div><div class="card-sub">コース、ラウンド、設定を端末から削除します。この操作は取り消せません。</div><button class="primary" style="background:var(--error);margin-top:16px" data-action="confirm-clear">全データを削除</button><button class="header-btn" style="width:100%;margin-top:6px" data-action="close-modal">キャンセル</button></div></div>`}
  return''}
 
