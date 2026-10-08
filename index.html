@@ -317,6 +317,79 @@ button{cursor:pointer}
  .round-result-page .result-quick-actions button{font-size:12px}
 }
 
+
+/* Data analysis UI improvements.
+   Existing score and shot charts, category colors and math are preserved. */
+.analysis-page{padding-top:16px}
+.analysis-page .tabline{gap:3px;padding:4px;background:#EDF1F6;border:1px solid #E6EAF0;box-shadow:none;border-radius:16px;margin-bottom:16px}
+.analysis-page .tabline button{min-width:0;min-height:46px;padding:6px 1px;font-size:11px;line-height:1.25;border-radius:12px;background:transparent;touch-action:manipulation}
+.analysis-page .tabline button.active{background:var(--orange);color:#fff;box-shadow:0 3px 9px rgba(255,106,36,.15)}
+.analysis-page .tabline button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.analysis-page-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 15px}
+.analysis-page-title h2{font-size:21px;font-weight:850;line-height:1.35;margin:0;color:var(--text)}
+.analysis-page-title span{font-size:11px;color:var(--sub);font-weight:700;text-align:right}
+.analysis-page .card,.club-analysis-page .card{border:1px solid #EBEFF3}
+.analysis-page .card-title,.club-analysis-page .card-title{font-size:16px;line-height:1.4;font-weight:800;margin-bottom:13px}
+.analysis-page .analysis-summary-card{padding:16px;margin-bottom:15px}
+.analysis-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.analysis-summary-grid .metric{min-width:0;min-height:88px;padding:13px;background:#F8FAFC;border:1px solid #F1F4F7}
+.analysis-summary-grid .metric-label{font-size:11px;line-height:1.45}
+.analysis-summary-grid .metric-value{font-size:27px;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.analysis-section-heading{margin:25px 2px 12px;display:flex;align-items:center;gap:9px;font-size:17px;font-weight:850;line-height:1.4;color:var(--text)}
+.analysis-section-heading:before{content:"";width:4px;height:21px;border-radius:6px;background:var(--orange);flex:0 0 auto}
+.analysis-page .analysis-play-metrics .metric{min-width:0;min-height:84px}
+.analysis-page .analysis-play-metrics .metric-value{font-variant-numeric:tabular-nums}
+.analysis-page .analysis-play-metrics .grid2{gap:10px}
+.analysis-page .tendency-block{margin-top:18px}
+.analysis-page .share-bar .share-segment,.club-analysis-page .share-bar .share-segment{flex:1 1 0;width:0}
+/* The 34px high rounded bar, divider lines, tiers and legends are unchanged. */
+.analysis-round-list{display:grid;gap:10px}
+.analysis-round-card{width:100%;display:block;background:#fff;border:1px solid #E7EBF0;border-radius:16px;box-shadow:var(--shadow);padding:15px;text-align:left;min-height:83px;touch-action:manipulation}
+.analysis-round-card:active,.analysis-club-row:active{background:#FFF8F4}
+.analysis-round-card:focus-visible,.analysis-club-row:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.analysis-round-main{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.analysis-round-left{min-width:0;flex:1}
+.analysis-round-course{font-size:15px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
+.analysis-round-date{font-size:12px;color:var(--sub);margin-top:7px}
+.analysis-round-nine{background:#F1F4F8;border-radius:5px;padding:3px 5px;color:#586577;font-size:10px;font-weight:800;margin-left:5px}
+.analysis-round-right{text-align:right;flex:0 0 auto}
+.analysis-round-right strong{display:block;font-size:27px;font-weight:850;line-height:1;font-variant-numeric:tabular-nums}
+.analysis-round-right span{display:block;color:var(--orange);font-size:11px;font-weight:800;margin-top:5px}
+.analysis-club-wrap{border:1px solid #EBEFF3;box-shadow:var(--shadow);border-radius:16px;background:#fff;padding:14px}
+.analysis-club-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
+.analysis-club-toolbar-label{font-size:12px;font-weight:700;color:var(--sub)}
+.analysis-club-sort{display:flex;align-items:center;gap:3px;background:#F1F4F8;border-radius:11px;padding:3px}
+.analysis-club-sort button{border:0;background:transparent;border-radius:9px;min-height:38px;padding:6px 9px;font-size:11px;font-weight:800;color:var(--sub);white-space:nowrap;touch-action:manipulation}
+.analysis-club-sort button.active{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(23,32,51,.1)}
+.analysis-club-sort button:focus-visible{outline:2px solid var(--blue)}
+.analysis-club-table-head{display:grid;grid-template-columns:minmax(0,1fr) 64px 74px 12px;gap:6px;align-items:center;padding:0 4px 9px;border-bottom:1px solid #E7EBF0;font-size:11px;font-weight:700;color:var(--sub)}
+.analysis-club-table-head span:nth-child(n+2){text-align:right}
+.analysis-club-row{border:0;border-bottom:1px solid #EEF1F4;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) 64px 74px 12px;gap:6px;align-items:center;text-align:left;width:100%;min-height:54px;padding:9px 4px;touch-action:manipulation}
+.analysis-club-row:last-child{border-bottom:0}
+.analysis-club-name{font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.analysis-club-count,.analysis-club-average{font-size:13px;font-weight:700;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.analysis-club-average{color:var(--sub)}
+.analysis-club-chevron{font-size:19px;color:var(--sub);text-align:right}
+.analysis-club-row.is-putter{color:var(--sub);cursor:default}
+.analysis-club-row.is-putter .analysis-club-name{color:var(--text)}
+.analysis-club-note{font-size:11px;line-height:1.6;color:var(--sub);margin:12px 2px 0}
+.club-analysis-page{padding-top:18px}
+.club-analysis-page .analysis-detail-meta{font-size:12px;line-height:1.5;color:var(--sub);margin:0 2px 14px}
+.club-analysis-page .analysis-detail-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.club-analysis-page .analysis-detail-metrics .metric{min-width:0;background:#F8FAFC;border-color:#F1F4F7;padding:13px}
+.club-analysis-page .analysis-detail-metrics .metric-value{font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.club-analysis-page .stat-legend{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.club-analysis-page .stat-legend span{display:block;overflow-wrap:anywhere;line-height:1.5}
+.club-analysis-page .tendency-block{margin-top:0}
+@media(max-width:350px){
+ .analysis-page .tabline button{font-size:10px}
+ .analysis-club-wrap{padding:11px}
+ .analysis-club-table-head,.analysis-club-row{grid-template-columns:minmax(0,1fr) 52px 69px 10px;gap:3px}
+ .analysis-club-toolbar{align-items:flex-start;flex-direction:column}
+ .analysis-club-sort{align-self:stretch}
+ .analysis-club-sort button{flex:1}
+}
+
 </style>
 </head>
 <body><div id="app"></div>
@@ -382,7 +455,7 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&v.ve
 function mergeConfig(saved,defs){if(!Array.isArray(saved))return defs;const byLabel=new Map(saved.map(x=>[x?.label,x]));const base=defs.map(x=>{const old=byLabel.get(x.label);return old?{...x,...old,custom:false}:x});const custom=saved.filter(x=>x&&x.custom&&String(x.label||'').trim()&&!base.some(d=>d.label===x.label)).map(x=>({...x,label:String(x.label).trim(),custom:true}));return base.concat(custom)}
 function mergeData(v){const s=defaultSettings(),vs=v.settings||{};return{version:1,settings:{...s,...vs,inputs:{...s.inputs,...(vs.inputs||{})},options:{...s.options,...(vs.options||{})},shotStyles:mergeConfig(vs.shotStyles,s.shotStyles),feedback:{good:mergeConfig(vs.feedback?.good,s.feedback.good),miss:mergeConfig(vs.feedback?.miss,s.feedback.miss)}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
-let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',historyQuery:'',storageError:'',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
+let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',clubSort:'registered',historyQuery:'',storageError:'',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
 const firstSavedCourse=data.courses.find(c=>c.id===ui.start.courseId);if(firstSavedCourse)applyStartCourse(firstSavedCourse);
 let lastRenderedScreen=ui.screen;
 let lastRenderedPageKey='';
@@ -970,7 +1043,14 @@ function historyPage(){
   +'<div class="history-round-list" id="history-round-list">'+historyCardsHtml(rs)+'</div></div>';
 }
 
-function dataPage(){return`${dataHeader()}<div class="page" style="padding-top:18px"><div class="tabline">${[['all','全期間'],['recent','直近5R'],['round','ラウンド別'],['club','クラブ別']].map(([k,l])=>`<button class="${ui.dataTab===k?'active':''}" data-data-tab="${k}">${l}</button>`).join('')}</div>${dataTabContent()}</div>`}
+function dataPage(){
+ const tabs=[['all','全期間'],['recent','直近5R'],['round','ラウンド別'],['club','クラブ別']];
+ const info={all:['全期間の分析','全ラウンド'],recent:['直近5Rの分析','直近5ラウンド'],round:['ラウンド別','新しい順'],club:['クラブ別','登録クラブ']};
+ const [title,caption]=info[ui.dataTab]||info.all;
+ return `${dataHeader()}<div class="page analysis-page"><div class="tabline" role="tablist" aria-label="データ分析の対象">
+ ${tabs.map(([key,label])=>`<button type="button" role="tab" aria-selected="${ui.dataTab===key}" class="${ui.dataTab===key?'active':''}" data-data-tab="${key}">${label}</button>`).join('')}
+ </div><div class="analysis-page-title"><h2>${title}</h2><span>${caption}</span></div>${dataTabContent()}</div>`;
+}
 function dataTabContent(){if(ui.dataTab==='recent')return recentData();if(ui.dataTab==='round')return roundData();if(ui.dataTab==='club')return clubData();return allData()}
 function aggregateRounds(rs){const valid=rs.filter(r=>completedHoles(r).length),scores=valid.map(r=>roundStats(r)),allShots=scores.flatMap(s=>s.allShots);const roundUnits=valid.reduce((n,r)=>n+(Number(r.holeCount||r.holes.length)===9?.5:1),0);const perRound=key=>roundUnits?sum(scores.map(s=>s[key]))/roundUnits:0;const fwN=sum(scores.map(s=>s.fwN)),fwD=sum(scores.map(s=>s.fwD)),girN=sum(scores.map(s=>s.girN)),girD=sum(scores.map(s=>s.girD));const full=scores.filter((s,i)=>Number(valid[i].holeCount||valid[i].holes.length)===18&&s.holes===18);return{valid,scores,allShots,rounds:valid.length,avgScore:perRound('total'),best:Math.min(...full.map(s=>s.total),999),avgPutts:perRound('putts'),fw:pct(fwN,fwD),gir:pct(girN,girD),ob:perRound('ob'),pen:perRound('pen')}}
 function monthTrendChart(rs){
@@ -1043,18 +1123,20 @@ function allData(){
   return color+' '+from+'% '+running/Math.max(1,scoreTotal)*100+'%';
  }).join(',');
  const pie=`<div class="score-pie-wrap"><div class="score-pie" style="background:conic-gradient(${stops})"><div class="score-pie-center"><div><strong>${scoreTotal}</strong>H</div></div></div><div class="score-pie-legend">${pieItems.map(([label,v,color])=>`<div class="score-pie-item"><span class="score-pie-name"><span class="score-pie-dot" style="background:${color}"></span>${label}</span><strong>${pct(v,scoreTotal)}%</strong></div>`).join('')}</div></div>`;
- return `<div class="card"><div class="card-title">サマリー</div><div class="grid2">
+ return `<div class="card analysis-summary-card"><div class="card-title">サマリー</div><div class="grid2 analysis-summary-grid">
  <div class="metric"><div class="metric-label">ラウンド数</div><div class="metric-value">${a.rounds}</div></div>
  <div class="metric"><div class="metric-label">平均スコア</div><div class="metric-value orange">${a.avgScore.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">ベストスコア（18Hのみ）</div><div class="metric-value blue">${a.best===999?'—':a.best}</div></div>
  <div class="metric"><div class="metric-label">平均パット数</div><div class="metric-value">${a.avgPutts.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">年間スコア推移</div>${monthTrendChart(rs)}</div>
- <div class="card"><div class="card-title">プレー指標</div><div class="grid2">
+ <h3 class="analysis-section-heading">プレー分析</h3>
+ <div class="card analysis-play-metrics"><div class="card-title">プレー指標</div><div class="grid2">
  <div class="metric"><div class="metric-label">FWキープ率</div><div class="metric-value">${a.fw}%</div></div>
  <div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${a.gir}%</div></div>
  <div class="metric"><div class="metric-label">OB / R</div><div class="metric-value">${a.ob.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">Pen / R</div><div class="metric-value">${a.pen.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">スコア分布</div>${pie}</div>
+ <h3 class="analysis-section-heading">ショット分析</h3>
  <div class="card"><div class="card-title">ショット傾向</div>
  <div class="heat-legend"><span class="heat-key"><span class="heat-swatch heat-low"></span>少ない</span><span class="heat-key"><span class="heat-swatch heat-mid"></span>普通</span><span class="heat-key"><span class="heat-swatch heat-high"></span>多い</span></div>
  ${share3('Par4・Par5 ティーショット方向',dir45,['左','中央','右'])}
@@ -1086,19 +1168,21 @@ function recentData(){
  const pieItems=[['バーディー以下',scoreDist.birdie,'#2F6FE4'],['パー',scoreDist.par,'#DDE5EF'],['ボギー',scoreDist.bogey,'#FFB184'],['ダブルボギー以上',scoreDist.double,'#FF6A24']];
  let running=0;const stops=pieItems.map(([label,v,color])=>{const from=running/Math.max(1,scoreTotal)*100;running+=v;return color+' '+from+'% '+running/Math.max(1,scoreTotal)*100+'%'}).join(',');
  const pie='<div class="score-pie-wrap"><div class="score-pie" style="background:conic-gradient('+stops+')"><div class="score-pie-center"><div><strong>'+scoreTotal+'</strong>H</div></div></div><div class="score-pie-legend">'+pieItems.map(([label,v,color])=>'<div class="score-pie-item"><span class="score-pie-name"><span class="score-pie-dot" style="background:'+color+'"></span>'+label+'</span><strong>'+pct(v,scoreTotal)+'%</strong></div>').join('')+'</div></div>';
- return `<div class="card"><div class="card-title">直近5R サマリー</div><div class="grid2">
+ return `<div class="card analysis-summary-card"><div class="card-title">直近5R サマリー</div><div class="grid2 analysis-summary-grid">
  <div class="metric"><div class="metric-label">ラウンド数</div><div class="metric-value">${a.rounds}</div></div>
  <div class="metric"><div class="metric-label">平均スコア</div><div class="metric-value orange">${a.avgScore.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">ベストスコア（18Hのみ）</div><div class="metric-value blue">${a.best===999?'—':a.best}</div></div>
  <div class="metric"><div class="metric-label">平均パット数</div><div class="metric-value">${a.avgPutts.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">スコア・PUTT推移</div>${stackedChart(rs,st)}</div>
  <div class="card"><div class="card-title">FW・GIR推移</div>${lineChart(rs,st)}</div>
- <div class="card"><div class="card-title">プレー指標</div><div class="grid2">
+ <h3 class="analysis-section-heading">プレー分析</h3>
+ <div class="card analysis-play-metrics"><div class="card-title">プレー指標</div><div class="grid2">
  <div class="metric"><div class="metric-label">FWキープ率</div><div class="metric-value">${a.fw}%</div></div>
  <div class="metric"><div class="metric-label">GIR</div><div class="metric-value">${a.gir}%</div></div>
  <div class="metric"><div class="metric-label">OB / R</div><div class="metric-value">${a.ob.toFixed(1)}</div></div>
  <div class="metric"><div class="metric-label">Pen / R</div><div class="metric-value">${a.pen.toFixed(1)}</div></div></div></div>
  <div class="card"><div class="card-title">スコア分布</div>${pie}</div>
+ <h3 class="analysis-section-heading">ショット分析</h3>
  <div class="card"><div class="card-title">ショット傾向</div>
  <div class="heat-legend"><span class="heat-key"><span class="heat-swatch heat-low"></span>少ない</span><span class="heat-key"><span class="heat-swatch heat-mid"></span>普通</span><span class="heat-key"><span class="heat-swatch heat-high"></span>多い</span></div>
  ${share3('Par4・Par5 ティーショット方向',dir45,['左','中央','右'])}
@@ -1113,9 +1197,41 @@ function recentData(){
 }
 function stackedChart(rs,st){const W=360,H=230,L=35,R=8,T=22,B=36,max=120;const cw=(W-L-R)/rs.length,bar=cw*.5,clipPrefix='stack-bar-'+uid();let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" aria-label="スコアとパットの積み上げ棒グラフ">`;[0,40,80,120].forEach(v=>{const y=T+(H-T-B)*(1-v/max);svg+=`<line class="chart-grid" x1="${L}" y1="${y}" x2="${W-R}" y2="${y}"/><text x="4" y="${y+4}" font-size="9" fill="#667085">${v}</text>`});st.forEach((s,i)=>{const x=L+cw*i+(cw-bar)/2;const shot=s.total-s.putts;const hShot=(H-T-B)*shot/max,hP=(H-T-B)*s.putts/max,y0=H-B,clipId=clipPrefix+'-'+i;svg+=`<g data-result-id="${rs[i].id}" role="button" aria-label="${esc(rs[i].date)} のラウンド詳細" style="cursor:pointer"><rect x="${x-8}" y="${T}" width="${bar+16}" height="${H-T-8}" fill="transparent"/><defs><clipPath id="${clipId}"><rect x="${x}" y="${y0-hShot-hP}" width="${bar}" height="${hShot+hP}" rx="3"/></clipPath></defs><g clip-path="url(#${clipId})"><rect class="chart-orange" x="${x}" y="${y0-hShot-hP}" width="${bar}" height="${hShot+hP}"/><rect class="chart-blue" x="${x}" y="${y0-hShot-hP}" width="${bar}" height="${hP}"/></g><text x="${x+bar/2}" y="${y0-hShot-hP-7}" text-anchor="middle" font-size="11" font-weight="800" fill="#172033">${s.total}</text><text x="${x+bar/2}" y="${y0-hShot-hP/2+4}" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">${s.putts}</text><text x="${x+bar/2}" y="${H-13}" text-anchor="middle" font-size="9" fill="#667085">${fmtDate(rs[i].date)}</text></g>`});svg+=`<text x="${W-112}" y="12" font-size="9" fill="#FF6A24">● ショット</text><text x="${W-56}" y="12" font-size="9" fill="#2F6FE4">● PUTT</text></svg>`;return svg}
 function lineChart(rs,st){const W=360,H=210,L=38,R=12,T=24,B=34,cw=(W-L-R)/(Math.max(1,rs.length-1));let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" aria-label="FWとGIRの折れ線グラフ">`;[0,20,40,60,80,100].forEach(v=>{const y=T+(H-T-B)*(1-v/100);svg+=`<line class="chart-grid" x1="${L}" y1="${y}" x2="${W-R}" y2="${y}"/><text x="4" y="${y+3}" font-size="8" fill="#667085">${v}%</text>`});const pts=(key)=>st.map((s,i)=>[L+cw*i,T+(H-T-B)*(1-s[key]/100)]);const pf=pts('fw'),pg=pts('gir');svg+=`<polyline fill="none" stroke="#FF6A24" stroke-width="2.5" points="${pf.map(p=>p.join(',')).join(' ')}"/><polyline fill="none" stroke="#2F6FE4" stroke-width="2.5" points="${pg.map(p=>p.join(',')).join(' ')}"/>`;st.forEach((s,i)=>{const x=L+cw*i;const yf=pf[i][1],yg=pg[i][1];svg+=`<circle cx="${x}" cy="${yf}" r="4" fill="#FF6A24"/><circle cx="${x}" cy="${yg}" r="4" fill="#2F6FE4"/><text x="${x}" y="${yf-7}" text-anchor="middle" font-size="8" fill="#FF6A24" font-weight="700">${s.fw}%</text><text x="${x}" y="${yg+14}" text-anchor="middle" font-size="8" fill="#2F6FE4" font-weight="700">${s.gir}%</text><text x="${x}" y="${H-11}" text-anchor="middle" font-size="8" fill="#667085">${fmtDate(rs[i].date)}</text>`});svg+=`<text x="${W-92}" y="12" font-size="9" fill="#FF6A24">● FW</text><text x="${W-48}" y="12" font-size="9" fill="#2F6FE4">● GIR</text></svg>`;return svg}
-function roundData(){const rs=[...data.rounds].sort((a,b)=>String(b.date).localeCompare(String(a.date)));return`<div class="list">${rs.map(r=>{const s=roundStats(r);return`<button class="list-item" style="width:100%;background:#fff;border-left:0;border-top:0;border-right:0;text-align:left" data-result-id="${r.id}"><div><div class="list-title">${esc(r.courseName)}</div><div class="list-sub">${esc(r.date)}</div></div><div><strong>${s.total}</strong> <span class="chev">›</span></div></button>`}).join('')}</div>`}
-function clubData(){const shots=data.rounds.flatMap(r=>roundStats(r).allShots);return`<div class="list">${data.settings.clubs.map(c=>{if(c.name==='パター')return`<div class="list-item"><div class="list-title">${esc(c.name)}</div><div class="small muted">—</div></div>`;const cs=shots.filter(s=>s.club===c.name),ds=cs.map(s=>Number(s.shotDistance)).filter(Boolean);return`<button class="list-item" style="width:100%;background:#fff;border-left:0;border-top:0;border-right:0;text-align:left" data-club-detail="${c.id}"><div><div class="list-title">${esc(c.name)}</div><div class="list-sub">${cs.length}回</div></div><div class="row"><span class="small muted">平均 ${ds.length?Math.round(avg(ds))+'y':'—'}</span><span class="chev">›</span></div></button>`}).join('')}</div>`}
-function clubDetail(){const c=data.settings.clubs.find(x=>x.id===ui.clubId);if(!c)return'';const shots=data.rounds.flatMap(r=>roundStats(r).allShots).filter(s=>s.club===c.name),ds=shots.map(s=>Number(s.shotDistance)).filter(Boolean);const dir=freq(shots,x=>x.directionMode==='green'?mapGreenToLR(x.greenCell):x.direction,['左','中央','右']);const fl=freq(shots,'flight',['ドロー','ストレート','フェード']);const good=shots.filter(x=>shotHasGood(x)).length,miss=shots.filter(x=>shotHasMiss(x)).length;const misses={};shots.flatMap(x=>x.misses||[]).forEach(m=>misses[m]=(misses[m]||0)+1);return`${clubDetailHeader(c.name+' の分析')}<div class="page"><div class="card"><div class="card-title">距離</div><div class="grid2"><div class="metric"><div class="metric-label">平均</div><div class="metric-value">${ds.length?Math.round(avg(ds))+'y':'—'}</div></div><div class="metric"><div class="metric-label">使用回数</div><div class="metric-value">${shots.length}</div></div><div class="metric"><div class="metric-label">最大</div><div class="metric-value">${ds.length?Math.max(...ds)+'y':'—'}</div></div><div class="metric"><div class="metric-label">最小</div><div class="metric-value">${ds.length?Math.min(...ds)+'y':'—'}</div></div></div>${distanceBins(ds)}</div><div class="card"><div class="card-title">方向</div>${threeBar('',dir,['左','中央','右'],'dir')}</div><div class="card"><div class="card-title">球筋</div>${threeBar('',fl,['ドロー','ストレート','フェード'],'flight')}</div>${((enabledFeedback('good').length||enabledFeedback('miss').length)||good||miss)?`<div class="card"><div class="card-title">Good / ミス</div><div class="grid2"><div class="metric"><div class="metric-label">Good</div><div class="metric-value orange">${pct(good,good+miss)}%</div></div><div class="metric"><div class="metric-label">ミス</div><div class="metric-value blue">${pct(miss,good+miss)}%</div></div></div><div class="divider"></div>${Object.entries(misses).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(misses),1))).join('')||'<div class="small muted">ミス内訳なし</div>'}</div>`:''}</div>`}
+function roundData(){
+ const rs=[...data.rounds].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ if(!rs.length)return'<div class="history-no-results">まだラウンドがありません。<br>ラウンドを記録すると、ここに表示されます。</div>';
+ return '<div class="analysis-round-list">'+rs.map(r=>{
+  const stats=roundStats(r),nine=Number(r.holeCount||r.holes?.length||18)===9;
+  return '<button type="button" class="analysis-round-card" data-result-id="'+esc(r.id)+'" aria-label="'+esc(r.courseName+' '+r.date+' スコア '+stats.total)+'">'
+   +'<div class="analysis-round-main"><div class="analysis-round-left"><div class="analysis-round-course">'+esc(r.courseName)
+   +(nine?'<span class="analysis-round-nine">9H</span>':'')+'</div><div class="analysis-round-date">'+esc(r.date)+'</div></div>'
+   +'<div class="analysis-round-right"><strong>'+stats.total+'</strong><span>'+scoreLabel(stats.diff)+' ›</span></div></div></button>';
+ }).join('')+'</div>';
+}
+function clubData(){
+ const shots=data.rounds.flatMap(r=>roundStats(r).allShots);
+ const original=data.settings.clubs||[];
+ const countFor=c=>shots.filter(x=>x.club===c.name).length;
+ const ordered=ui.clubSort==='count'?[...original].sort((a,b)=>countFor(b)-countFor(a)):original;
+ const sortButton=(key,label)=>'<button type="button" data-club-sort="'+key+'" class="'+(ui.clubSort===key?'active':'')+'" aria-pressed="'+(ui.clubSort===key)+'">'+label+'</button>';
+ const rows=ordered.map(c=>{
+  const putter=c.clubType==='putter'||c.name==='パター'||c.name==='PT';
+  const cs=shots.filter(x=>x.club===c.name),ds=cs.map(x=>Number(x.shotDistance)).filter(Boolean);
+  const avgText=putter?'—':ds.length?Math.round(avg(ds))+'y':'—';
+  const cells='<span class="analysis-club-name">'+esc(c.name)+'</span>'
+   +'<span class="analysis-club-count">'+(putter?'—':cs.length+'回')+'</span>'
+   +'<span class="analysis-club-average">'+avgText+'</span>'
+   +'<span class="analysis-club-chevron">'+(putter?'':'›')+'</span>';
+  if(putter)return'<div class="analysis-club-row is-putter" aria-label="'+esc(c.name)+'（ショット分析対象外）">'+cells+'</div>';
+  return '<button type="button" class="analysis-club-row" data-club-detail="'+esc(c.id)+'" aria-label="'+esc(c.name)+'、使用 '+cs.length+'回、平均 '+avgText+'、詳細を開く">'+cells+'</button>';
+ }).join('');
+ return '<div class="analysis-club-wrap"><div class="analysis-club-toolbar"><span class="analysis-club-toolbar-label">表示順</span>'
+  +'<div class="analysis-club-sort" role="group" aria-label="クラブ表示順">'+sortButton('registered','登録順')+sortButton('count','使用回数順')+'</div></div>'
+  +'<div class="analysis-club-table-head"><span>クラブ</span><span>使用数</span><span>平均距離</span><span></span></div>'
+  +'<div class="analysis-club-rows">'+(rows||'<div class="empty">クラブが登録されていません。</div>')+'</div></div>'
+  +'<div class="analysis-club-note">クラブをタップすると方向・球筋・Good / ミスなどの詳細分析を表示します。パターは対象外です。</div>';
+}
+function clubDetail(){const c=data.settings.clubs.find(x=>x.id===ui.clubId);if(!c)return'';const shots=data.rounds.flatMap(r=>roundStats(r).allShots).filter(s=>s.club===c.name),ds=shots.map(s=>Number(s.shotDistance)).filter(Boolean);const dir=freq(shots,x=>x.directionMode==='green'?mapGreenToLR(x.greenCell):x.direction,['左','中央','右']);const fl=freq(shots,'flight',['ドロー','ストレート','フェード']);const good=shots.filter(x=>shotHasGood(x)).length,miss=shots.filter(x=>shotHasMiss(x)).length;const misses={};shots.flatMap(x=>x.misses||[]).forEach(m=>misses[m]=(misses[m]||0)+1);return`${clubDetailHeader(c.name+' の分析')}<div class="page club-analysis-page"><div class="analysis-detail-meta">ラウンドで記録したショットから集計しています。</div><div class="card"><div class="card-title">距離</div><div class="grid2 analysis-detail-metrics"><div class="metric"><div class="metric-label">平均</div><div class="metric-value">${ds.length?Math.round(avg(ds))+'y':'—'}</div></div><div class="metric"><div class="metric-label">使用回数</div><div class="metric-value">${shots.length}</div></div><div class="metric"><div class="metric-label">最大</div><div class="metric-value">${ds.length?Math.max(...ds)+'y':'—'}</div></div><div class="metric"><div class="metric-label">最小</div><div class="metric-value">${ds.length?Math.min(...ds)+'y':'—'}</div></div></div>${distanceBins(ds)}</div><div class="card"><div class="card-title">方向</div>${threeBar('',dir,['左','中央','右'],'dir')}</div><div class="card"><div class="card-title">球筋</div>${threeBar('',fl,['ドロー','ストレート','フェード'],'flight')}</div>${((enabledFeedback('good').length||enabledFeedback('miss').length)||good||miss)?`<div class="card"><div class="card-title">Good / ミス</div><div class="grid2"><div class="metric"><div class="metric-label">Good</div><div class="metric-value orange">${pct(good,good+miss)}%</div></div><div class="metric"><div class="metric-label">ミス</div><div class="metric-value blue">${pct(miss,good+miss)}%</div></div></div><div class="divider"></div>${Object.entries(misses).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(misses),1))).join('')||'<div class="small muted">ミス内訳なし</div>'}</div>`:''}</div>`}
 function distanceBins(ds){if(!ds.length)return'<div class="empty">距離データなし</div>';const min=Math.floor(Math.min(...ds)/10)*10,max=Math.ceil(Math.max(...ds)/10)*10;const bins=[];for(let x=min;x<=max;x+=10){bins.push([`${x}–${x+9}`,ds.filter(v=>v>=x&&v<x+10).length])}const m=Math.max(...bins.map(x=>x[1]),1);return`<div class="divider"></div><div class="label">距離の分布</div>${bins.map(([k,v])=>barRow(k,v,m)).join('')}`}
 function settings(){return`${settingsHeader('home')}<div class="page" style="padding-top:18px"><div class="list">${[['settings-clubs','クラブ設定','使用するクラブの登録・編集'],['settings-styles','打ち方設定','表示する打ち方や独自項目を管理'],['settings-feedback','Good・ミスの設定','表示項目や独自項目を管理'],['settings-input','ショット入力設定','その他の表示項目を設定'],['settings-round','ラウンド設定','プレー時の基本設定'],['settings-courses','ゴルフ場管理','登録済みゴルフ場の確認・編集・削除'],['settings-data','データ管理','保存データの確認・バックアップ・削除']].map(([go,t,s])=>`<button class="list-item" style="width:100%;background:#fff;border-left:0;border-top:0;border-right:0;text-align:left" data-go="${go}"><div><div class="list-title">${t}</div><div class="list-sub">${s}</div></div><span class="chev">›</span></button>`).join('')}</div></div>`}
 function settingsClubs(){
@@ -1339,6 +1455,7 @@ function onClick(e){
  }
  if(t.dataset.resultId){ui.resultReturnTo=['home','history','data'].includes(ui.screen)?ui.screen:'home';ui.resultFromFinish=false;ui.prev=ui.screen;ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
  if(t.dataset.dataTab){ui.dataTab=t.dataset.dataTab;render();return}
+ if(t.dataset.clubSort){ui.clubSort=t.dataset.clubSort==='count'?'count':'registered';render();return}
  if(t.dataset.clubDetail){ui.prev=ui.screen;ui.clubId=t.dataset.clubDetail;ui.screen='club-detail';render();return}
  if(t.dataset.editField&&ui.modal?.type==='editShot'){toggleSimpleDraftField(ui.modal.draft,t.dataset.editField,t.dataset.value);render();return}
  if(t.dataset.editGood&&ui.modal?.type==='editShot'){ui.modal.draft.goods=toggleArrayValue(ui.modal.draft.goods,t.dataset.editGood);render();return}
