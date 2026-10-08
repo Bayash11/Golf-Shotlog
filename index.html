@@ -470,6 +470,7 @@ function resolvedStartTee(){return ui.start.tee==='その他'?(String(ui.start.t
 function createRoundFromStart(){
  const sel=data.courses.find(c=>c.id===ui.start.courseId); let name=(sel?.name||ui.start.courseName||'未登録コース').trim(); const tee=resolvedStartTee(); const sections=resolvedStartSections();
  let course=sel;
+ if(!course)course=data.courses.find(c=>c.name===name&&c.tee===tee&&JSON.stringify(c.sections||['OUT','IN'])===JSON.stringify(sections));
  if(!course || course.name!==name || course.tee!==tee || JSON.stringify(course.sections||['OUT','IN'])!==JSON.stringify(sections)){
    const base=sel||{...defaultCourse(),holes:ui.start.newCourseHoles}; course={id:uid(),name,tee,sections:[...sections],holes:base.holes.map(h=>({...h}))}; data.courses.push(course);
  }
@@ -1147,7 +1148,25 @@ function modal(){if(!ui.modal)return'';const m=ui.modal;if(m.type==='memo'){cons
  if(m.type==='confirmClear'){return`<div class="modal-back"><div class="modal-card"><div class="card-title danger">全データを削除しますか？</div><div class="card-sub">コース、ラウンド、設定を端末から削除します。この操作は取り消せません。</div><button class="primary" style="background:var(--error);margin-top:16px" data-action="confirm-clear">全データを削除</button><button class="header-btn" style="width:100%;margin-top:6px" data-action="close-modal">キャンセル</button></div></div>`}
  return''}
 
-function readStartForm(){ui.start.courseId=(document.getElementById('start-course')?.value||'')==='new'?'':(document.getElementById('start-course')?.value||'');ui.start.courseName=document.getElementById('start-course-name')?.value||'';ui.start.frontSection=document.getElementById('start-front-section')?.value||'OUT';ui.start.backSection=document.getElementById('start-back-section')?.value||'IN';ui.start.frontSectionOther=document.getElementById('start-front-other')?.value||'';ui.start.backSectionOther=document.getElementById('start-back-other')?.value||'';ui.start.tee=document.getElementById('start-tee')?.value||'Regular';ui.start.teeOther=document.getElementById('start-tee-other')?.value||'';ui.start.weather=document.getElementById('start-weather')?.value||'晴';ui.start.green=document.getElementById('start-green')?.value||'';ui.start.holeCount=Number(document.getElementById('start-holecount')?.value||18)}
+function readStartForm(){
+ const courseEl=document.getElementById('start-course');
+ if(courseEl)ui.start.courseId=courseEl.value;
+ const nameEl=document.getElementById('start-course-name');if(nameEl)ui.start.courseName=nameEl.value;
+ const read=(id,key)=>{const el=document.getElementById(id);if(el)ui.start[key]=el.value};
+ read('start-front-section','frontSection');read('start-back-section','backSection');
+ read('start-front-other','frontSectionOther');read('start-back-other','backSectionOther');
+ read('start-tee','tee');read('start-tee-other','teeOther');
+ read('start-weather','weather');read('start-green','green');
+ const countEl=document.getElementById('start-holecount');if(countEl)ui.start.holeCount=Number(countEl.value)||18;
+}
+function validStartForm(){
+ if(!ui.start.courseId&&!String(ui.start.courseName||'').trim()){toast('新しいゴルフ場名を入力してください');return false}
+ if(ui.start.frontSection==='その他'&&!String(ui.start.frontSectionOther||'').trim()){toast('前半コース名を入力してください');return false}
+ if(ui.start.holeCount===18&&ui.start.backSection==='その他'&&!String(ui.start.backSectionOther||'').trim()){toast('後半コース名を入力してください');return false}
+ if(ui.start.tee==='その他'&&!String(ui.start.teeOther||'').trim()){toast('ティー名を入力してください');return false}
+ return true;
+}
+
 function saveCourseFields(){
  const c=data.courses.find(x=>x.id===ui.start.courseId),holes=c?.holes||ui.start.newCourseHoles;
  if(!Array.isArray(holes))return;
@@ -1244,7 +1263,7 @@ function onClick(e){
  else if(a==='open-recent-data'){ui.prev=ui.screen;ui.dataTab='recent';ui.screen='data';render()}
  else if(a==='shot-history'){ui.viewRoundId=t.dataset.id;ui.scorecardRoundId=t.dataset.id;ui.prev='result';ui.screen='shot-history';render()}
  else if(a==='course-half'){readStartForm();saveCourseFields();ui.courseEditHalf=Number(t.dataset.value);render()}
- else if(a==='start-round'){readStartForm();saveCourseFields();try{document.activeElement?.blur?.()}catch(e){}mutate(()=>{data.activeRound=createRoundFromStart();ui.screen='play'});resetViewportTop()}
+ else if(a==='start-round'){readStartForm();if(!validStartForm())return;saveCourseFields();try{document.activeElement?.blur?.()}catch(e){}mutate(()=>{data.activeRound=createRoundFromStart();ui.screen='play'});resetViewportTop()}
  else if(a==='edit-hole-info'){if(currentHole()){ui.modal={type:'holeInfoEdit',par:Number(currentHole().par)};render()}}
  else if(a==='set-hole-par'){if(ui.modal?.type==='holeInfoEdit'){ui.modal.par=Number(t.dataset.value);render()}}
  else if(a==='save-hole-info'){const h=currentHole();if(h){const par=clamp(Number(ui.modal?.par||h.par),3,6),oldDistance=Number(h.distance||0),distance=clamp(Math.round(Number(document.getElementById('edit-hole-distance')?.value||h.distance)),1,999),delta=distance-oldDistance,untouched=(h.shots||[]).length===0&&h.stage!=='putt',shotStage=h.stage==='shot';mutate(()=>{h.par=par;h.distance=distance;if(shotStage&&Number.isFinite(Number(h.currentRemainingY)))h.currentRemainingY=Math.max(0,Number(h.currentRemainingY)+delta);else if(untouched)h.currentRemainingY=distance;ui.modal=null});toast('ホール情報を修正しました')}}
@@ -1284,23 +1303,27 @@ function onClick(e){
  else if(a==='confirm-discard-active-round'){if(data.activeRound){data.activeRound=null;persist()}ui.modal=null;ui.screen='home';render();toast('途中ラウンドを削除しました')}
  else if(a==='confirm-clear'){localStorage.removeItem(KEY);data=seed();data.rounds=[];data.activeRound=null;ui.modal=null;ui.screen='home';persist();render();toast('データを削除しました')}
 }
+function applyStartCourse(c){
+ const sec=Array.isArray(c.sections)&&c.sections.length>=2?c.sections:['OUT','IN'];
+ ui.start.frontSection=['OUT','IN'].includes(sec[0])?sec[0]:'その他';
+ ui.start.frontSectionOther=ui.start.frontSection==='その他'?sec[0]:'';
+ ui.start.backSection=['OUT','IN'].includes(sec[1])?sec[1]:'その他';
+ ui.start.backSectionOther=ui.start.backSection==='その他'?sec[1]:'';
+ ui.start.tee=['Back','Regular','Front','Ladies'].includes(c.tee)?c.tee:'その他';
+ ui.start.teeOther=ui.start.tee==='その他'?(c.tee||''):'';
+}
 function onChange(e){const el=e.target;
  if(el.dataset.clubField&&ui.clubDraft){const i=Number(el.dataset.index),row=ui.clubDraft[i];if(!row)return;if(el.dataset.clubField==='type'){row.clubType=el.value;row.name=el.value==='driver'?'Dr':el.value==='putter'?'PT':''}else if(el.dataset.clubField==='name'){row.name=el.value}else if(el.dataset.clubField==='typical'){row.typical=el.value}render();return}
  if(el.id==='start-course'){
-  ui.start.courseId=el.value==='new'?'':el.value;
+  ui.start.courseId=el.value;
   const c=data.courses.find(x=>x.id===ui.start.courseId);
-  if(c){
-   const sec=Array.isArray(c.sections)&&c.sections.length>=2?c.sections:['OUT','IN'];
-   ui.start.frontSection=['OUT','IN'].includes(sec[0])?sec[0]:'その他';ui.start.frontSectionOther=ui.start.frontSection==='その他'?sec[0]:'';
-   ui.start.backSection=['OUT','IN'].includes(sec[1])?sec[1]:'その他';ui.start.backSectionOther=ui.start.backSection==='その他'?sec[1]:'';
-   ui.start.tee=['Back','Regular','Front','Ladies'].includes(c.tee)?c.tee:'その他';ui.start.teeOther=ui.start.tee==='その他'?(c.tee||''):'';
-  }
-  render();return
+  if(c)applyStartCourse(c);
+  ui.courseEditHalf=0;render();return
  }
  if(el.id==='start-front-section'){ui.start.frontSection=el.value;render();return}
  if(el.id==='start-back-section'){ui.start.backSection=el.value;render();return}
  if(el.id==='start-tee'){ui.start.tee=el.value;render();return}
- if(el.id==='start-holecount'){ui.start.holeCount=Number(el.value)||18;return}
+ if(el.id==='start-holecount'){ui.start.holeCount=Number(el.value)||18;render();return}
  if(el.id==='start-weather'){ui.start.weather=el.value;return}
  if(el.classList.contains('hole-par')||el.classList.contains('hole-distance')){saveCourseFields();return}if(el.id==='remaining-after'||el.id==='direct-distance'){const h=currentHole();if(!h)return;if(el.id==='remaining-after')h.draft.remainingAfterY=el.value;else h.draft.directDistance=el.value;persist();return}}
 
