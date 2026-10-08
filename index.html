@@ -362,8 +362,10 @@ function render(){
  if(!historyReady){
    history.replaceState(historyState(),'');
    historyReady=true;
- }else if(screenChanged&&!restoringHistory){
-   history.pushState(historyState(),'');
+ }else if(!restoringHistory){
+   // Preserve changed data tabs in the current history entry without adding a page.
+   if(screenChanged)history.pushState(historyState(),'');
+   else history.replaceState(historyState(),'');
  }
  if(screenChanged)lastRenderedScreen=ui.screen;
  if(pageChanged){
@@ -777,8 +779,10 @@ function onClick(e){
   const scorecardBack=from==='scorecard'&&to===ui.scorecardReturnTo;
   const shotHistoryBack=from==='shot-history'&&to==='result';
   const resultBack=from==='result'&&to===ui.resultReturnTo;
-  // Return via browser history to avoid creating Result -> Scorecard -> Result loops.
-  if((scorecardBack||shotHistoryBack||(resultBack&&!ui.resultFromFinish))&&historyReady&&history.length>1){history.back();return}
+  const dataBack=from==='data'&&to==='home';
+  const clubBack=from==='club-detail'&&to==='data';
+  // Back buttons should reuse the same previous entry as the swipe gesture.
+  if((scorecardBack||shotHistoryBack||(resultBack&&!ui.resultFromFinish)||dataBack||clubBack)&&historyReady&&history.length>1){history.back();return}
   ui.prev=from;
   if(to==='settings-clubs')ui.clubDraft=clubDraftRows();
   if(to==='settings-styles')ui.styleDraft=JSON.parse(JSON.stringify(data.settings.shotStyles||[]));
@@ -787,7 +791,7 @@ function onClick(e){
  }
  if(t.dataset.resultId){ui.resultReturnTo=['home','history','data'].includes(ui.screen)?ui.screen:'home';ui.resultFromFinish=false;ui.prev=ui.screen;ui.viewRoundId=t.dataset.resultId;ui.screen='result';render();return}
  if(t.dataset.dataTab){ui.dataTab=t.dataset.dataTab;render();return}
- if(t.dataset.clubDetail){ui.clubId=t.dataset.clubDetail;ui.screen='club-detail';render();return}
+ if(t.dataset.clubDetail){ui.prev=ui.screen;ui.clubId=t.dataset.clubDetail;ui.screen='club-detail';render();return}
  if(t.dataset.editField&&ui.modal?.type==='editShot'){toggleSimpleDraftField(ui.modal.draft,t.dataset.editField,t.dataset.value);render();return}
  if(t.dataset.editGood&&ui.modal?.type==='editShot'){ui.modal.draft.goods=toggleArrayValue(ui.modal.draft.goods,t.dataset.editGood);render();return}
  if(t.dataset.editMiss&&ui.modal?.type==='editShot'){ui.modal.draft.misses=toggleArrayValue(ui.modal.draft.misses,t.dataset.editMiss);render();return}
@@ -830,7 +834,7 @@ function onClick(e){
  if(a==='new-round'){ui.screen='start';render()}
  else if(a==='resume-round'){ui.screen='play';render();resetViewportTop()}
  else if(a==='discard-active-round'){if(data.activeRound){ui.modal={type:'confirmDiscardRound'};render()}}
- else if(a==='open-recent-data'){ui.dataTab='recent';ui.screen='data';render()}
+ else if(a==='open-recent-data'){ui.prev=ui.screen;ui.dataTab='recent';ui.screen='data';render()}
  else if(a==='shot-history'){ui.viewRoundId=t.dataset.id;ui.scorecardRoundId=t.dataset.id;ui.prev='result';ui.screen='shot-history';render()}
  else if(a==='course-half'){readStartForm();saveCourseFields();ui.courseEditHalf=Number(t.dataset.value);render()}
  else if(a==='start-round'){readStartForm();saveCourseFields();try{document.activeElement?.blur?.()}catch(e){}mutate(()=>{data.activeRound=createRoundFromStart();ui.screen='play'});resetViewportTop()}
