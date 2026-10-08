@@ -162,6 +162,48 @@ button{cursor:pointer}
 .sc-stats>div{background:#F5F7FA;border-radius:10px;text-align:center;padding:13px 4px}
 .sc-stats small{display:block;font-size:10px;color:var(--sub);margin-bottom:4px}
 .sc-stats strong{font-size:21px;font-weight:850}
+
+.hole-sheet{padding:0;height:min(80dvh,730px);max-height:calc(100dvh - env(safe-area-inset-top) - 18px);display:flex;flex-direction:column;overflow:hidden}
+.hole-sheet-header{flex-shrink:0;padding:10px 16px 13px;background:#fff;border-radius:22px 22px 0 0;border-bottom:1px solid #E6EBF2}
+.hole-sheet .sheet-handle{margin:0 auto 13px}
+.hole-sheet-heading{display:flex;justify-content:space-between;align-items:center}
+.hole-sheet-heading>div{display:flex;align-items:baseline;gap:10px}
+.hole-sheet-heading strong{font-size:21px;font-weight:850}
+.hole-sheet-heading span{font-size:12px;color:var(--sub);font-weight:700}
+.hole-sheet-close{border:0;border-radius:50%;width:33px;height:33px;background:#EFF2F6;color:#637083;font-size:21px}
+.hole-sheet-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:13px 14px 20px;-webkit-overflow-scrolling:touch}
+.hole-sheet-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hole-sheet-stats>div{background:#fff;border:1px solid #E9EDF3;border-radius:11px;text-align:center;padding:12px 4px}
+.hole-sheet-stats span{display:block;font-size:10px;color:var(--sub)}
+.hole-sheet-stats strong{display:block;font-size:23px;font-weight:850;margin-top:3px}
+.hole-sheet-stats strong.orange{color:var(--orange)}
+.hole-sheet-subtitle{font-size:14px;font-weight:800;margin:19px 2px 11px}
+.hole-sheet-subtitle small{font-weight:500;font-size:10px;color:var(--sub);margin-left:5px}
+.hole-shot-card{background:#fff;border:1px solid #E6EBF2;border-radius:12px;margin-bottom:9px;overflow:hidden}
+.hole-shot-main{display:flex;align-items:center;width:100%;gap:9px;padding:12px 10px;text-align:left;background:#fff;border:0}
+.hole-shot-num{background:#FFF0E7;color:var(--orange);font-size:13px;font-weight:850;width:34px;height:34px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.hole-shot-num.putt{background:#EAF1FF;color:var(--blue)}
+.hole-shot-center{flex:1;min-width:0}
+.hole-shot-center strong{font-size:13px;font-weight:800;display:block}
+.hole-shot-center small{font-size:10px;color:var(--sub);display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hole-shot-right{text-align:right;max-width:79px;min-width:54px}
+.hole-shot-right strong{font-size:12px;font-weight:800;display:block}
+.hole-shot-right small{font-size:10px;color:var(--sub);display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hole-shot-chevron{color:#A1AAB7;font-size:16px;margin-left:3px}
+.hole-shot-detail{background:#F8FAFC;border-top:1px solid #E9EDF3;padding:10px 13px}
+.hole-shot-detail-row{display:flex;align-items:baseline;justify-content:space-between;gap:15px;padding:6px 0;font-size:12px}
+.hole-shot-detail-row span{color:var(--sub);white-space:nowrap}
+.hole-shot-detail-row strong{text-align:right;overflow-wrap:anywhere;font-weight:750}
+.hole-shot-actions{display:flex;gap:9px;margin-top:12px}
+.hole-shot-actions button{border:1px solid #DFE5ED;border-radius:9px;background:#fff;min-height:42px;font-size:12px;font-weight:750;flex:1;padding:8px 5px}
+.hole-shot-actions button.danger{color:#D04F3D;border-color:#F3D1CC}
+.hole-sheet-memo{background:#fff;border-radius:12px;padding:13px;margin-top:15px;border:1px solid #E6EBF2}
+.hole-sheet-memo strong{font-size:13px}
+.hole-sheet-memo p{font-size:12px;color:var(--sub);line-height:1.6;white-space:pre-wrap;margin:9px 0 0}
+.hole-sheet-footer{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#fff;border-top:1px solid #E7ECF2;padding:11px 14px calc(12px + env(safe-area-inset-bottom))}
+.hole-sheet-footer button{border:1px solid #E0E6EE;border-radius:10px;background:#fff;min-height:45px;font-size:13px;font-weight:800;color:var(--text)}
+.hole-sheet-footer button.next{background:var(--orange);color:#fff;border-color:var(--orange)}
+.hole-sheet-footer button:disabled{opacity:.36}
 </style>
 </head>
 <body><div id="app"></div>
@@ -813,14 +855,28 @@ function settingsInput(){const inp=data.settings.inputs;const rows=[['ballFlight
 function settingsRound(){return`${settingsHeader('settings')}<div class="page"><div class="settings-section-title"><h2>ラウンド設定</h2></div><div class="card"><div class="card-title">グリーン狙い自動切替距離</div><div class="card-sub">残り距離が設定値以下のとき、方向入力を9マスで開きます。プレー中に手動切替もできます。</div><div class="row" style="margin-top:14px"><input class="input" id="green-auto" type="number" inputmode="numeric" value="${data.settings.greenAutoYards}"><span class="small muted">yd</span><button class="ghost" data-action="save-round-setting">保存</button></div></div><div class="note">距離はヤード、パットはメートル（0.5m刻み）で固定しています。</div></div>`}
 function settingsData(){return`${settingsHeader('settings')}<div class="page"><div class="settings-section-title"><h2>データ管理</h2></div><div class="list"><div class="list-item"><div><div class="list-title">保存済みコース</div><div class="list-sub">登録コースを端末内に保存</div></div><strong>${data.courses.length}</strong></div><div class="list-item"><div><div class="list-title">ラウンドデータ</div><div class="list-sub">完了済みラウンド</div></div><strong>${data.rounds.length}</strong></div><div class="list-item"><div><div class="list-title">JSON</div><div class="list-sub">ラウンド結果からプレビュー→コピー</div></div><span class="badge blue">COPY</span></div></div><button class="secondary danger" style="margin-top:16px" data-action="clear-samples">サンプルデータだけ削除</button><button class="secondary danger" style="margin-top:10px" data-action="clear-all">全データ削除</button></div>`}
 
-function holeSheetShotCard(r,h,s,i){
- const canEdit=r===data.activeRound;
- const del=canEdit?'<button class="shot-delete-x" data-action="delete-sheet-shot" data-shot-index="'+i+'" data-hole="'+h.number+'" aria-label="'+(i+1)+'打目を削除">×</button>':'';
- if(s.type==='putt'){
-  const lies=(s.puttLie||[]).map(puttLieLabel).filter(Boolean).join('・');
-  return '<div class="shot-card collapsed" '+(canEdit?'data-action="edit-shot-from-sheet" data-shot="'+i+'" data-hole="'+h.number+'"':'')+'>'+del+'<div class="shot-summary"><span class="shot-num">'+(i+1)+'</span><div class="shot-main"><div class="shot-line">PUTT '+Number(s.puttBeforeM||0).toFixed(1)+'m → '+(s.puttAfterM===0?'Cup-in':Number(s.puttAfterM||0).toFixed(1)+'m')+'</div><div class="shot-mini">'+esc(lies||'—')+' · '+esc(s.puttCell||'')+'</div></div><span class="chev">›</span></div></div>';
+function holeSheetShotCard(r,h,shot,i){
+ const canEdit=r===data.activeRound,expanded=ui.modal?.type==='holeSheet'&&ui.modal.expanded===i,putt=shot.type==='putt';
+ const meta=putt?`${Number(shot.puttBeforeM||0).toFixed(1)}m → ${Number(shot.puttAfterM||0)===0?'Cup-in':Number(shot.puttAfterM||0).toFixed(1)+'m'}`:(shotMetaParts(shot).join(' · ')||'詳細入力なし');
+ const name=putt?'PT':(shot.club||'未入力');
+ const distance=putt?(Number(shot.puttAfterM||0)===0?'Cup-in':Number(shot.puttAfterM||0).toFixed(1)+'m'):(Number(shot.shotDistance)>0?Math.round(shot.shotDistance)+'yd':'—');
+ const landing=putt?(shot.puttCell||'—'):(shot.landing||'—');
+ const fields=[],add=(label,value)=>{if(value!==undefined&&value!==null&&String(value).trim()!=='')fields.push([label,String(value)])};
+ if(putt){
+  add('パット前の距離',Number(shot.puttBeforeM||0).toFixed(1)+'m');
+  add('パット後の距離',distance);
+  add('ライ',(shot.puttLie||[]).map(puttLieLabel).join('・'));
+  add('到達位置',shot.puttCell);
+ }else{
+  add('クラブ',shot.club);add('方向',shotDirectionText(shot));add('球筋',shot.flight);add('打ち方',shot.shotType);
+  add('打感',feelText(shot.feel));add('Good',(shot.goods||[]).join('・'));add('ミス',(shot.misses||[]).join('・'));
+  add('傾斜',slopeText(shot.slope));add('ライ',shot.lie);add('到着地点',shot.landing);
+  if(Number(shot.shotDistance)>0)add('飛距離',Math.round(shot.shotDistance)+'yd');
+  if(shot.remainingAfterY!==undefined&&shot.remainingAfterY!==null&&shot.remainingAfterY!=='')add('ショット後の残り',shot.remainingAfterY+'yd');
+  if(Number(shot.penalty)>0)add('罰打','+'+shot.penalty);
  }
- return '<div class="shot-card collapsed" '+(canEdit?'data-action="edit-shot-from-sheet" data-shot="'+i+'" data-hole="'+h.number+'"':'')+'>'+del+'<div class="shot-summary"><span class="shot-num">'+(i+1)+'</span><div class="shot-main"><div class="shot-line">'+esc(s.club||'未入力')+' '+(s.shotDistance?Math.round(s.shotDistance)+'yd':'')+'</div><div class="shot-mini">'+esc(shotMetaParts(s).join('・')||'入力なし')+(s.penalty?' · +'+s.penalty:'')+'</div>'+feedbackTagsHtml(s)+'</div><span class="chev">›</span></div></div>';
+ const detail=expanded?`<div class="hole-shot-detail">${fields.map(([k,v])=>`<div class="hole-shot-detail-row"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('')||'<div class="small muted">詳細記録なし</div>'}${canEdit?`<div class="hole-shot-actions"><button type="button" data-action="edit-shot-from-sheet" data-shot="${i}" data-hole="${h.number}">このショットを修正</button><button type="button" class="danger" data-action="delete-sheet-shot" data-shot-index="${i}" data-hole="${h.number}">削除</button></div>`:''}</div>`:'';
+ return `<div class="hole-shot-card"><button type="button" class="hole-shot-main" data-action="toggle-hole-sheet-shot" data-shot-index="${i}" aria-expanded="${expanded?'true':'false'}"><span class="hole-shot-num${putt?' putt':''}">${i+1}</span><span class="hole-shot-center"><strong>${esc(name)}</strong><small>${esc(meta)}</small></span><span class="hole-shot-right"><strong>${esc(distance)}</strong><small>${esc(landing)}</small></span><span class="hole-shot-chevron">${expanded?'⌃':'⌄'}</span></button>${detail}</div>`;
 }
 function shotEditorSheet(h,s,index,d){
  if(s.type==='putt'){
@@ -850,8 +906,20 @@ function shotEditorSheet(h,s,index,d){
  html+='<div class="grid2" style="margin-top:16px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" data-action="save-edit-shot">保存</button></div></div></div>';
  return html;
 }
+function holeSheetModal(r,h,m){
+ if(!r||!h)return'';
+ const idx=r.holes.findIndex(x=>x.number===h.number),score=holeScore(h),delta=score==null?'—':scoreLabel(score-h.par);
+ return `<div class="modal-back"><section class="sheet hole-sheet" role="dialog" aria-modal="true" aria-label="${h.number}Hのショット履歴">
+ <div class="hole-sheet-header"><div class="sheet-handle"></div><div class="hole-sheet-heading"><div><strong>${h.number}H</strong><span>Par ${h.par} · ${h.distance}yd</span></div><button class="hole-sheet-close" type="button" data-action="close-modal" aria-label="閉じる">×</button></div></div>
+ <div class="hole-sheet-body"><div class="hole-sheet-stats"><div><span>SCORE</span><strong class="orange">${score??'—'}</strong></div><div><span>PUTT</span><strong>${h.shots.length||score!=null?holePutts(h):'—'}</strong></div><div><span>TO PAR</span><strong>${delta}</strong></div></div>
+ <div class="hole-sheet-subtitle">ショット履歴 <small>各打をタップで詳細表示</small></div>
+ ${h.shots.length?h.shots.map((shot,i)=>holeSheetShotCard(r,h,shot,i)).join(''):'<div class="empty">ショット記録なし</div>'}
+ ${h.memo?`<div class="hole-sheet-memo"><strong>ホールメモ</strong><p>${esc(h.memo)}</p></div>`:''}</div>
+ <div class="hole-sheet-footer"><button type="button" data-action="hole-sheet-change" data-dir="-1" ${idx>0?'':'disabled'}>‹ 前のH</button><button type="button" class="next" data-action="hole-sheet-change" data-dir="1" ${idx<r.holes.length-1?'':'disabled'}>次のH ›</button></div>
+ </section></div>`;
+}
 function modal(){if(!ui.modal)return'';const m=ui.modal;if(m.type==='memo'){const h=currentHole(),r=currentRound(),doneCount=r?completedHoles(r).length:0,canJson=doneCount>=3;return`<div class="modal-back"><div class="sheet"><div class="sheet-handle"></div><div class="card-title">${h.number}H コースメモ</div><div class="card-sub">気づき・反省・次回の狙いなどを自由に記録します。</div><textarea class="textarea" id="memo-text" style="margin-top:12px">${esc(h.memo)}</textarea><button class="primary" style="margin-top:10px" data-action="save-memo">保存</button><div class="divider"></div><div class="card-title">データ出力</div><div class="card-sub">${canJson?`現在までの${doneCount}H分のスコア・ショットデータをJSON形式で出力できます。`:'3ホール完了後からJSON出力が使えます。'}</div>${canJson?'<button class="secondary" style="width:100%;margin-top:10px" data-action="json">JSON出力</button>':'<button class="secondary" style="width:100%;margin-top:10px;opacity:.45" disabled>JSON出力（3H終了後から）</button>'}<button class="header-btn" style="width:100%;margin-top:8px" data-action="close-modal">閉じる</button></div></div>`}
- if(m.type==='holeSheet'){const r=roundById(m.roundId)||currentRound(),h=r.holes.find(x=>x.number===m.hole);return '<div class="modal-back"><div class="sheet"><div class="sheet-handle"></div><div class="row between"><div><div class="card-title" style="margin:0">'+h.number+'H · Par'+h.par+' · '+h.distance+'yd</div><div class="small muted">Score '+(holeScore(h)??'—')+' · '+holePutts(h)+' PUTT</div></div><button class="header-btn" data-action="close-modal">閉じる</button></div><div style="margin-top:14px">'+(h.shots.length?h.shots.map((s,i)=>holeSheetShotCard(r,h,s,i)).join(''):'<div class="empty">ショット記録なし</div>')+'</div></div></div>'}
+ if(m.type==='holeSheet'){const r=roundById(m.roundId),h=r?.holes.find(x=>x.number===m.hole);return holeSheetModal(r,h,m)}
  if(m.type==='shotDetail'){const r=currentRound(),h=r?.holes.find(x=>x.number===Number(m.hole||currentHole()?.number)),shot=h?.shots?.[m.index];if(!h||!shot)return'';let body='';if(shot.type==='putt'){body='<div class="list"><div class="list-item"><span>残距離</span><strong>'+shot.puttBeforeM+'m → '+(shot.puttAfterM===0?'Cup-in':shot.puttAfterM+'m')+'</strong></div><div class="list-item"><span>ライ</span><strong>'+esc((shot.puttLie||[]).map(puttLieLabel).join(' / ')||'—')+'</strong></div><div class="list-item"><span>到達位置</span><strong>'+esc(shot.puttCell||'—')+'</strong></div></div>'}else{const rows=[['クラブ',shot.club],['方向',shot.directionMode==='green'?shot.greenCell:shot.direction],['球筋',shot.flight],['打ち方',shot.shotType],['打感',feelText(shot.feel)],['Good',(shot.goods||[]).join('・')],['ミス',(shot.misses||[]).join('・')],['傾斜',slopeText(shot.slope)],['ライ',shot.lie],['到着地点',shot.landing],['飛距離',shot.shotDistance?Math.round(shot.shotDistance)+'yd':'—'],['ショット後の残り',shot.remainingAfterY!==undefined?shot.remainingAfterY+'yd':'—'],['罰打',shot.penalty?('+'+shot.penalty):'—']];body='<div class="list">'+rows.map(x=>'<div class="list-item"><span>'+x[0]+'</span><strong>'+esc(x[1]||'—')+'</strong></div>').join('')+'</div>'}return '<div class="modal-back"><div class="sheet"><div class="sheet-handle"></div><div class="card-title">'+(m.index+1)+'打目 詳細</div>'+body+'<button class="primary" style="margin-top:12px" data-action="begin-edit-shot" data-shot="'+m.index+'" data-hole="'+h.number+'">このショットを修正</button><button class="header-btn" style="width:100%;margin-top:6px" data-action="close-modal">閉じる</button></div></div>'}
  if(m.type==='editShot'){const r=currentRound(),h=r?.holes.find(x=>x.number===Number(m.hole)),shot=h?.shots?.[m.index];if(!h||!shot||!m.draft)return'';return shotEditorSheet(h,shot,m.index,m.draft)}
  if(m.type==='holeInfoEdit'){const h=currentHole();if(!h)return'';return`<div class="modal-back"><div class="sheet"><div class="sheet-handle"></div><div class="card-title">${h.number}H ホール情報を修正</div><div class="card-sub">このラウンドだけに反映します。コース登録情報は変更されません。</div><div class="field" style="margin-top:16px"><div class="label">Par</div><div class="grid2" style="grid-template-columns:repeat(4,1fr)">${[3,4,5,6].map(v=>`<button class="chip ${Number(h.par)===v?'active':''}" data-action="set-hole-par" data-value="${v}">Par${v}</button>`).join('')}</div></div><div class="field"><div class="label">距離</div><div class="row"><input class="input" id="edit-hole-distance" type="number" inputmode="numeric" min="1" max="999" value="${esc(h.distance)}"><span class="small muted">yd</span></div></div><div class="grid2" style="margin-top:16px"><button class="ghost" data-action="close-modal">キャンセル</button><button class="primary" data-action="save-hole-info">保存</button></div></div></div>`}
@@ -928,13 +996,15 @@ function onClick(e){
  if(t.dataset.puttStep){mutatePuttDraftInPlace(()=>{const d=currentHole().puttDraft;d.afterM=Math.max(.5,Math.round((Number(d.afterM||.5)+Number(t.dataset.puttStep))*2)/2)});return}
  if(t.dataset.puttCurrentStep){const h=currentHole();if(h&&holePutts(h)===0){h.currentPuttRemainingM=Math.max(.5,Math.round((Number(h.currentPuttRemainingM||.5)+Number(t.dataset.puttCurrentStep))*2)/2);persist();const main=document.getElementById('putt-current-distance');if(main)main.textContent=Number(h.currentPuttRemainingM).toFixed(1)+'m';const inline=document.getElementById('putt-current-distance-inline');if(inline)inline.textContent=Number(h.currentPuttRemainingM).toFixed(1)}return}
  if(t.dataset.scorecardHalf!==undefined){ui.scorecardHalf=Number(t.dataset.scorecardHalf)===1?1:0;render();return}
- if(t.dataset.holeSheet){const r=roundById(ui.scorecardRoundId)||currentRound();ui.modal={type:'holeSheet',roundId:r.id,hole:Number(t.dataset.holeSheet)};render();return}
+ if(t.dataset.holeSheet){const r=ui.screen==='shot-history'?roundById(ui.viewRoundId):(roundById(ui.scorecardRoundId)||currentRound()),n=Number(t.dataset.holeSheet);if(!r||!r.holes.some(h=>h.number===n))return;ui.modal={type:'holeSheet',roundId:r.id,hole:n,expanded:null};render();return}
  if(t.dataset.clubMoveDraft!==undefined){const i=Number(t.dataset.clubMoveDraft),j=i+Number(t.dataset.dir);if(ui.clubDraft&&j>=0&&j<ui.clubDraft.length){const x=ui.clubDraft[i];ui.clubDraft[i]=ui.clubDraft[j];ui.clubDraft[j]=x;render()}return}
  if(t.dataset.clubDeleteDraft!==undefined){const i=Number(t.dataset.clubDeleteDraft);if(ui.clubDraft){ui.clubDraft.splice(i,1);render()}return}
  if(t.dataset.clubMove){mutate(()=>{const a=data.settings.clubs,i=a.findIndex(x=>x.id===t.dataset.clubMove),j=clamp(i+Number(t.dataset.dir),0,a.length-1);if(i>=0&&i!==j){const [x]=a.splice(i,1);a.splice(j,0,x)}});return}
  if(t.dataset.clubDelete){mutate(()=>{data.settings.clubs=data.settings.clubs.filter(x=>x.id!==t.dataset.clubDelete)});return}
  if(t.dataset.toggleInput){mutate(()=>{const k=t.dataset.toggleInput;data.settings.inputs[k]=!data.settings.inputs[k]});return}
  const a=t.dataset.action;
+ if(a==='toggle-hole-sheet-shot'&&ui.modal?.type==='holeSheet'){const i=Number(t.dataset.shotIndex),scroll=document.querySelector('.hole-sheet-body')?.scrollTop||0;ui.modal.expanded=ui.modal.expanded===i?null:i;render();const body=document.querySelector('.hole-sheet-body');if(body)body.scrollTop=scroll;return}
+ if(a==='hole-sheet-change'&&ui.modal?.type==='holeSheet'){const m=ui.modal,r=roundById(m.roundId),idx=r?.holes.findIndex(h=>h.number===m.hole),j=idx+Number(t.dataset.dir);if(r&&idx>=0&&j>=0&&j<r.holes.length){m.hole=r.holes[j].number;m.expanded=null;if(ui.screen==='scorecard')ui.scorecardHalf=j>=9?1:0;render()}return}
  if(a==='new-round'){ui.screen='start';render()}
  else if(a==='resume-round'){ui.screen='play';render();resetViewportTop()}
  else if(a==='discard-active-round'){if(data.activeRound){ui.modal={type:'confirmDiscardRound'};render()}}
@@ -1051,7 +1121,7 @@ document.addEventListener('touchcancel',()=>{edgeSwipe=null},{passive:true,captu
 let sheetSwipe=null;
 document.addEventListener('touchstart',e=>{
  const sheet=e.target.closest?.('.sheet');
- if(!sheet||e.touches.length!==1||sheet.scrollTop>0){sheetSwipe=null;return}
+ if(!sheet||e.touches.length!==1||sheet.scrollTop>0||(e.target.closest?.('.hole-sheet-body')?.scrollTop||0)>0){sheetSwipe=null;return}
  const p=e.touches[0];
  sheetSwipe={sheet,x:p.clientX,y:p.clientY,lastY:p.clientY,t:Date.now(),dragging:false};
 },{passive:true,capture:true});
