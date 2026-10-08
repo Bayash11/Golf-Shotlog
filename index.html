@@ -289,7 +289,7 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&v.ve
 function mergeConfig(saved,defs){if(!Array.isArray(saved))return defs;const byLabel=new Map(saved.map(x=>[x?.label,x]));const base=defs.map(x=>{const old=byLabel.get(x.label);return old?{...x,...old,custom:false}:x});const custom=saved.filter(x=>x&&x.custom&&String(x.label||'').trim()&&!base.some(d=>d.label===x.label)).map(x=>({...x,label:String(x.label).trim(),custom:true}));return base.concat(custom)}
 function mergeData(v){const s=defaultSettings(),vs=v.settings||{};return{version:1,settings:{...s,...vs,inputs:{...s.inputs,...(vs.inputs||{})},options:{...s.options,...(vs.options||{})},shotStyles:mergeConfig(vs.shotStyles,s.shotStyles),feedback:{good:mergeConfig(vs.feedback?.good,s.feedback.good),miss:mergeConfig(vs.feedback?.miss,s.feedback.miss)}},courses:Array.isArray(v.courses)?v.courses:[],rounds:Array.isArray(v.rounds)?v.rounds:[],activeRound:v.activeRound||null}}
 let data=load();
-let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
+let ui={screen:'home',prev:'home',resultReturnTo:'home',resultFromFinish:false,scorecardReturnTo:'play',scorecardHalf:0,dataTab:'recent',settingsScreen:null,viewRoundId:null,scorecardRoundId:null,modal:null,toast:'',start:{courseId:data.courses[0]?.id||'',courseName:'',frontSection:'OUT',backSection:'IN',frontSectionOther:'',backSectionOther:'',tee:'Regular',teeOther:'',weather:'晴',green:'A',holeCount:18,newCourseHoles:defaultCourse().holes},courseEditHalf:0,clubId:null,clubDraft:null,styleDraft:null,feedbackDraft:null,feedbackTab:'good'};
 let lastRenderedScreen=ui.screen;
 let lastRenderedPageKey='';
 let historyReady=false;
@@ -420,7 +420,7 @@ function createRoundFromStart(){
  const sel=data.courses.find(c=>c.id===ui.start.courseId); let name=(sel?.name||ui.start.courseName||'未登録コース').trim(); const tee=resolvedStartTee(); const sections=resolvedStartSections();
  let course=sel;
  if(!course || course.name!==name || course.tee!==tee || JSON.stringify(course.sections||['OUT','IN'])!==JSON.stringify(sections)){
-   const base=sel||defaultCourse(); course={id:uid(),name,tee,sections:[...sections],holes:base.holes.map(h=>({...h}))}; data.courses.push(course);
+   const base=sel||{...defaultCourse(),holes:ui.start.newCourseHoles}; course={id:uid(),name,tee,sections:[...sections],holes:base.holes.map(h=>({...h}))}; data.courses.push(course);
  }
  const count=Number(ui.start.holeCount)||18; const holes=course.holes.slice(0,count).map(h=>({number:h.number,par:h.par,distance:h.distance,pin:'中央',memo:'',shots:[],status:'open',score:null,stage:'shot',currentRemainingY:h.distance,currentPuttRemainingM:null,draft:shotDraft(),puttDraft:puttDraft()}));
  return {id:uid(),sample:false,date:TODAY(),courseName:name,courseId:course.id,section:sections.join(' / '),sections:[...sections],tee,weather:ui.start.weather,green:ui.start.green,holeCount:count,holes,currentHoleIndex:0,startedAt:new Date().toISOString(),completedAt:null};
@@ -565,7 +565,7 @@ function howto(){
  </div>`;
 }
 function start(){
- const c=data.courses.find(x=>x.id===ui.start.courseId)||data.courses[0]; const half=ui.courseEditHalf; const hs=(c?.holes||defaultCourse().holes).slice(half?9:0,half?18:9); const [frontLabel,backLabel]=resolvedStartSections();
+ const c=data.courses.find(x=>x.id===ui.start.courseId); const half=ui.courseEditHalf; const hs=(c?.holes||ui.start.newCourseHoles).slice(half?9:0,half?18:9); const [frontLabel,backLabel]=resolvedStartSections();
  return`${startHeader()}<div class="page"><div class="card"><div class="card-title">ラウンド設定</div>
  <div class="field"><div class="label">コース</div><select class="select" id="start-course"><option value="new">新しいコースを登録</option>${data.courses.map(x=>`<option value="${x.id}" ${ui.start.courseId===x.id?'selected':''}>${esc(x.name)} / ${esc(x.tee)}</option>`).join('')}</select></div>
  <div class="field"><div class="label">新規コース名</div><input class="input" id="start-course-name" placeholder="例：○○ゴルフクラブ" value="${esc(ui.start.courseName)}"></div>
@@ -1035,8 +1035,21 @@ function modal(){if(!ui.modal)return'';const m=ui.modal;if(m.type==='memo'){cons
  if(m.type==='confirmClear'){return`<div class="modal-back"><div class="modal-card"><div class="card-title danger">全データを削除しますか？</div><div class="card-sub">コース、ラウンド、設定を端末から削除します。この操作は取り消せません。</div><button class="primary" style="background:var(--error);margin-top:16px" data-action="confirm-clear">全データを削除</button><button class="header-btn" style="width:100%;margin-top:6px" data-action="close-modal">キャンセル</button></div></div>`}
  return''}
 
-function readStartForm(){ui.start.courseId=document.getElementById('start-course')?.value||'';ui.start.courseName=document.getElementById('start-course-name')?.value||'';ui.start.frontSection=document.getElementById('start-front-section')?.value||'OUT';ui.start.backSection=document.getElementById('start-back-section')?.value||'IN';ui.start.frontSectionOther=document.getElementById('start-front-other')?.value||'';ui.start.backSectionOther=document.getElementById('start-back-other')?.value||'';ui.start.tee=document.getElementById('start-tee')?.value||'Regular';ui.start.teeOther=document.getElementById('start-tee-other')?.value||'';ui.start.weather=document.getElementById('start-weather')?.value||'晴';ui.start.green=document.getElementById('start-green')?.value||'';ui.start.holeCount=Number(document.getElementById('start-holecount')?.value||18)}
-function saveCourseFields(){const c=data.courses.find(x=>x.id===ui.start.courseId);if(!c)return;document.querySelectorAll('.hole-par').forEach(el=>{const h=c.holes.find(x=>x.number===Number(el.dataset.hole));if(h)h.par=Number(el.value)});document.querySelectorAll('.hole-distance').forEach(el=>{const h=c.holes.find(x=>x.number===Number(el.dataset.hole));if(h)h.distance=Number(el.value)||h.distance});persist()}
+function readStartForm(){ui.start.courseId=(document.getElementById('start-course')?.value||'')==='new'?'':(document.getElementById('start-course')?.value||'');ui.start.courseName=document.getElementById('start-course-name')?.value||'';ui.start.frontSection=document.getElementById('start-front-section')?.value||'OUT';ui.start.backSection=document.getElementById('start-back-section')?.value||'IN';ui.start.frontSectionOther=document.getElementById('start-front-other')?.value||'';ui.start.backSectionOther=document.getElementById('start-back-other')?.value||'';ui.start.tee=document.getElementById('start-tee')?.value||'Regular';ui.start.teeOther=document.getElementById('start-tee-other')?.value||'';ui.start.weather=document.getElementById('start-weather')?.value||'晴';ui.start.green=document.getElementById('start-green')?.value||'';ui.start.holeCount=Number(document.getElementById('start-holecount')?.value||18)}
+function saveCourseFields(){
+ const c=data.courses.find(x=>x.id===ui.start.courseId),holes=c?.holes||ui.start.newCourseHoles;
+ if(!Array.isArray(holes))return;
+ document.querySelectorAll('.hole-par').forEach(el=>{
+  const h=holes.find(x=>x.number===Number(el.dataset.hole)),v=Number(el.value);
+  if(h&&Number.isInteger(v)&&v>=3&&v<=6)h.par=v;
+ });
+ document.querySelectorAll('.hole-distance').forEach(el=>{
+  const h=holes.find(x=>x.number===Number(el.dataset.hole)),v=Number(el.value);
+  if(h&&Number.isFinite(v)&&v>=1&&v<=999)h.distance=Math.round(v);
+ });
+ // Do not modify an existing saved course while the new-course draft is being edited.
+ if(c)persist();
+}
 function saveShot(skip=false){const r=currentRound(),h=currentHole(r),d=h.draft||shotDraft();const remEl=document.getElementById('remaining-after'),distEl=document.getElementById('direct-distance');if(remEl)d.remainingAfterY=remEl.value;if(distEl)d.directDistance=distEl.value;const before=Number(h.currentRemainingY||0),direct=Number(d.directDistance);let after;if(direct>0)after=Math.max(0,before-direct);else after=d.remainingAfterY===''?before:Number(d.remainingAfterY);d.remainingAfterY=after;const estimated=Math.max(0,before-after);const s={id:uid(),type:'shot',num:h.shots.length+1,club:skip?'':d.club,directionMode:d.directionMode,direction:skip?'':d.direction,greenCell:skip?'':d.greenCell,flight:skip?'':d.flight,quality:skip?'':(d.misses.length?'ミス':(d.goods.length?'Good':'')),goods:skip?[]:[...d.goods],misses:skip?[]:[...d.misses],feel:skip?[]:feelArray(d.feel),shotType:d.shotType,slope:skip?[]:slopeArray(d.slope),lie:d.lie,landing:skip?'':d.landing,remainingBeforeY:before,remainingAfterY:after,shotDistance:direct||estimated||null,estimatedDistance:!direct,penalty:skip?0:Number(d.penalty||0)};h.shots.push(s);h.currentRemainingY=after;if(!skip&&d.landing==='Green'){h.stage='putt';h.currentRemainingY=0;h.currentPuttRemainingM=null}h.draft=shotDraft()}
 function savePutt(){const h=currentHole(),d=h.puttDraft;const cup=d.cell==='Cup-in';const after=cup?0:Number(d.afterM||0);h.shots.push({id:uid(),type:'putt',num:h.shots.length+1,puttBeforeM:Number(h.currentPuttRemainingM||0),puttAfterM:after,puttLie:[...d.lie],puttCell:d.cell});h.currentPuttRemainingM=after;h.puttDraft=puttDraft();if(cup)finalizeHole(h,holeComputedScore(h))}
 function finalizeHole(h,score){h.status='done';h.stage='done';h.score=Number(score);h.currentRemainingY=0;h.currentPuttRemainingM=0}
