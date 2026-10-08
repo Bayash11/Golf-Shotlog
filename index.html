@@ -381,6 +381,9 @@ function nav(){return`<nav class="nav">
 <button data-nav="settings" class="${ui.screen.startsWith('settings')?'active':''}"><span class="nav-mark">⚙</span>設定</button></nav>`}
 function header(title,back='home',right=''){return`<header class="internal-header"><button class="header-btn" data-go="${back}">‹</button><div class="internal-title">${esc(title)}</div><div>${right}</div></header>`}
 function settingsHeader(back='home'){return`<header class="settings-fixed-header"><button class="settings-back" data-go="${back}">‹ 戻る</button><div class="settings-head-title">設定</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
+function howtoHeader(){
+ return `<header class="settings-fixed-header"><button class="settings-back" data-go="home">‹ 戻る</button><div class="settings-head-title">使い方</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`;
+}
 function dataHeader(){return`<header class="settings-fixed-header"><button class="settings-back" data-go="home">‹ 戻る</button><div class="settings-head-title">データ分析</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 function historyHeader(){return`<header class="settings-fixed-header"><button class="settings-back" data-go="home">‹ 戻る</button><div class="settings-head-title">履歴</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
 function clubDetailHeader(title){return`<header class="settings-fixed-header"><button class="settings-back" data-go="data">‹ 戻る</button><div class="settings-head-title club-detail-head-title">${esc(title)}</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
@@ -403,15 +406,55 @@ function home(){
  ${recent.length?`<div class="list">${recent.map(r=>{const s=roundStats(r);return`<button class="list-item" style="width:100%;border-left:0;border-top:0;border-right:0;background:#fff;text-align:left" data-result-id="${r.id}"><div><div class="list-title">${esc(r.courseName)} ${r.sample?'<span class="badge">サンプル</span>':''}</div><div class="list-sub">${esc(r.date)} · ${esc(r.tee)} · ${s.holes}H</div></div><div style="text-align:right"><div style="font-size:24px;font-weight:850">${s.total||'—'}</div><div class="list-sub">${s.holes?scoreLabel(s.diff):''}</div></div></button>`}).join('')}</div>`:`<div class="card empty">まだラウンドがありません。</div>`}
  <div class="grid2" style="margin-top:14px"><button class="secondary" data-go="history">履歴を見る</button><button class="secondary" data-go="data">データ分析</button></div></div>`}
 function howto(){
- return`${header('使い方','home')}<div class="page">
- <div class="card"><div class="brand small"><span class="shot">Shot</span> <span class="log">log</span></div><div class="tagline">打って、記録して、振り返る。</div><p class="card-sub" style="margin-top:14px">ラウンド中のショットをシンプルに残し、あとからスコア・ショット・クラブ傾向を振り返るためのアプリです。</p></div>
- <div class="section-head"><h2>はじめに</h2></div>
- <div class="list"><div class="list-item"><div><div class="list-title">1. クラブを登録</div><div class="list-sub">設定 → クラブ設定から最大14本を登録</div></div></div><div class="list-item"><div><div class="list-title">2. 入力項目を選ぶ</div><div class="list-sub">Good / ミス、球筋、打感など必要な項目だけON</div></div></div></div>
- <div class="section-head"><h2>ラウンド中</h2></div>
- <div class="list"><div class="list-item"><div><div class="list-title">1. ラウンド開始</div><div class="list-sub">コース・ティー・天気・グリーンを設定</div></div></div><div class="list-item"><div><div class="list-title">2. ショットを記録</div><div class="list-sub">クラブ・方向・球筋・残り距離などを入力</div></div></div><div class="list-item"><div><div class="list-title">3. ホールアウト</div><div class="list-sub">スコアカードに自動反映。必要なら後から修正</div></div></div></div>
- <div class="section-head"><h2>ラウンド後</h2></div>
- <div class="list"><div class="list-item"><div><div class="list-title">履歴</div><div class="list-sub">スコアとショット履歴を確認</div></div></div><div class="list-item"><div><div class="list-title">データ</div><div class="list-sub">直近5Rやクラブ別の傾向を振り返る</div></div></div></div>
- </div>`}
+ const row=(number,title,desc)=>`<div class="list-item" style="align-items:flex-start;justify-content:flex-start;gap:12px;padding:14px">
+  <div style="min-width:30px;height:30px;padding:5px 0;border-radius:10px;background:var(--orange-soft);color:var(--orange);font-size:13px;font-weight:850;text-align:center">${number}</div>
+  <div style="flex:1;min-width:0"><div class="list-title">${title}</div><div class="list-sub" style="font-size:13px;line-height:1.7;margin-top:6px">${desc}</div></div>
+ </div>`;
+ return `${howtoHeader()}<div class="page" style="padding-top:18px">
+ <div class="card">
+  <div class="card-title" style="margin-bottom:6px">打って、記録して、振り返る。</div>
+  <p class="card-sub" style="margin:0">Shot logは、ラウンド中のショットとスコアを記録し、あとからプレーの傾向を振り返るためのアプリです。</p>
+ </div>
+
+ <div class="section-head"><h2>最初に設定する3つ</h2></div>
+ <div class="list">
+ ${row('1','クラブ設定','設定 → クラブ設定で、使うクラブを最大14本まで登録します。種類・番手（表示名）・基準距離を設定してください。')}
+ ${row('2','打ち方設定','設定 → 打ち方設定で、ラウンド中に使う打ち方をONにします。独自の打ち方を追加することもできます。')}
+ ${row('3','Good・ミスの設定','設定 → Good・ミスの設定で、記録したい項目をONにします。独自の項目も追加でき、選んだ項目だけが入力画面に表示されます。')}
+ </div>
+ <div class="note" style="margin-top:12px">必要に応じて「ショット入力設定」で球筋・打感・傾斜・ライなどの表示を変更できます。「ラウンド設定」では、方向を9マス入力に自動切替する残り距離を設定できます。</div>
+
+ <div class="section-head"><h2>ラウンドを始める</h2></div>
+ <div class="list">
+ ${row('1','ホームから「ラウンド開始」','登録済みのコースを選ぶか、新しいコース名を入力します。')}
+ ${row('2','プレー情報とホール情報を設定','18H／9H、前半・後半のコース名、ティー、天気、グリーンを指定します。各ホールのPar・距離も確認・修正できます。')}
+ ${row('3','「この設定で開始」をタップ','1ホール目のショット記録が始まります。途中で中断した場合は、ホームの「ラウンドを再開」から続けられます。')}
+ </div>
+
+ <div class="section-head"><h2>ラウンド中の記録</h2></div>
+ <div class="list">
+ ${row('1','ショットを記録','クラブ → 方向 → 球筋 → 打ち方 → 打感 → Good → ミス → 傾斜 → ライ → 到着地点 → 距離の順に入力します。設定でOFFにした項目は表示されません。')}
+ ${row('2','方向・距離・ペナルティ','方向は「通常（左・中央・右）」と「グリーン（9マス）」を切替できます。残り距離が設定値以下なら9マスに自動切替します。ショット後の残り距離または直接飛距離を入力でき、OB・ハザード・ペナルティ時は罰打も選択できます。')}
+ ${row('3','パットを記録','グリーンに到達したら最初のパット距離をmで入力します。ライ・到達位置・パット後の残り距離を記録し、中央の「Cup-in」でホールアウトします。距離調整は0.5m刻みです。')}
+ ${row('4','ホールアウトと修正','各ホールのスコアとPUTT数を確認し、次のホールへ進みます。ショットの記録やホールのPar・距離は、ラウンド中に見直し・修正できます。')}
+ </div>
+ <div class="note" style="margin-top:12px">すべての項目を毎回埋める必要はありません。「未入力で次のショット」や手動ホールアウトも利用できます。ラウンド中はヘッダーからコースメモやスコアカードを開けます。</div>
+
+ <div class="section-head"><h2>ラウンド後の振り返り</h2></div>
+ <div class="list">
+ ${row('1','ラウンド結果を見る','スコア・PUTT・FWキープ率・GIR・スコア分布・ショット方向・球筋・クラブ使用数・Good／ミスを確認できます。コースメモの追記・修正もできます。')}
+ ${row('2','履歴から確認する','履歴一覧で過去のラウンドを選ぶと、結果サマリー・スコアカード・ホール別ショット履歴を確認できます。')}
+ ${row('3','データ分析で傾向を確認','「全期間」「直近5R」「ラウンド別」「クラブ別」の4つを切り替えられます。全期間の月別推移や直近5Rの変化、クラブごとの飛距離・方向などを振り返れます。')}
+ ${row('4','JSONをコピーする','3ホール終了後から、ラウンドの記録をJSON形式で表示・コピーできます。ラウンド結果の「JSON出力」から利用してください。')}
+ </div>
+
+ <div class="section-head"><h2>データの保存について</h2></div>
+ <div class="card">
+  <p class="card-sub" style="margin:0 0 10px">設定・コース・ラウンド記録は、このブラウザの端末内ストレージに保存されます。同じURLでもブラウザや保存領域が変わると、以前の記録が表示されない場合があります。</p>
+  <p class="card-sub" style="margin:0">「設定 → データ管理」にはサンプルデータの削除と全データ削除があります。全データ削除やブラウザのデータ消去を行う前に、必要な記録を確認してください。JSON出力はラウンド単位のコピー機能です。</p>
+ </div>
+ </div>`;
+}
 function start(){
  const c=data.courses.find(x=>x.id===ui.start.courseId)||data.courses[0]; const half=ui.courseEditHalf; const hs=(c?.holes||defaultCourse().holes).slice(half?9:0,half?18:9); const [frontLabel,backLabel]=resolvedStartSections();
  return`${startHeader()}<div class="page"><div class="card"><div class="card-title">ラウンド設定</div>
@@ -782,9 +825,10 @@ function onClick(e){
   const resultBack=from==='result'&&to===ui.resultReturnTo;
   const dataBack=from==='data'&&to==='home';
   const historyBack=from==='history'&&to==='home';
+  const howtoBack=from==='howto'&&to==='home';
   const clubBack=from==='club-detail'&&to==='data';
   // Back buttons should reuse the same previous entry as the swipe gesture.
-  if((scorecardBack||shotHistoryBack||(resultBack&&!ui.resultFromFinish)||dataBack||historyBack||clubBack)&&historyReady&&history.length>1){history.back();return}
+  if((scorecardBack||shotHistoryBack||(resultBack&&!ui.resultFromFinish)||dataBack||historyBack||howtoBack||clubBack)&&historyReady&&history.length>1){history.back();return}
   ui.prev=from;
   if(to==='settings-clubs')ui.clubDraft=clubDraftRows();
   if(to==='settings-styles')ui.styleDraft=JSON.parse(JSON.stringify(data.settings.shotStyles||[]));
