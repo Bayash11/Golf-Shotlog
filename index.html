@@ -617,18 +617,43 @@ function howto(){
  </div>`;
 }
 function start(){
- const c=data.courses.find(x=>x.id===ui.start.courseId); const half=ui.courseEditHalf; const hs=(c?.holes||ui.start.newCourseHoles).slice(half?9:0,half?18:9); const [frontLabel,backLabel]=resolvedStartSections();
- return`${startHeader()}<div class="page"><div class="card"><div class="card-title">ラウンド設定</div>
- <div class="field"><div class="label">コース</div><select class="select" id="start-course"><option value="new">新しいコースを登録</option>${data.courses.map(x=>`<option value="${x.id}" ${ui.start.courseId===x.id?'selected':''}>${esc(x.name)} / ${esc(x.tee)}</option>`).join('')}</select></div>
- <div class="field"><div class="label">新規コース名</div><input class="input" id="start-course-name" placeholder="例：○○ゴルフクラブ" value="${esc(ui.start.courseName)}"></div>
- <div class="field"><div class="label">ホール数</div><select class="select" id="start-holecount"><option value="18" ${ui.start.holeCount===18?'selected':''}>18H</option><option value="9" ${ui.start.holeCount===9?'selected':''}>9H</option></select></div>
- <div class="grid2"><div class="field"><div class="label">前半コース</div><select class="select" id="start-front-section"><option value="OUT" ${ui.start.frontSection==='OUT'?'selected':''}>OUT</option><option value="IN" ${ui.start.frontSection==='IN'?'selected':''}>IN</option><option value="その他" ${ui.start.frontSection==='その他'?'selected':''}>その他</option></select><input class="input" id="start-front-other" value="${esc(ui.start.frontSectionOther)}" placeholder="例：西" style="margin-top:8px;${ui.start.frontSection==='その他'?'':'display:none'}"></div><div class="field"><div class="label">後半コース</div><select class="select" id="start-back-section"><option value="OUT" ${ui.start.backSection==='OUT'?'selected':''}>OUT</option><option value="IN" ${ui.start.backSection==='IN'?'selected':''}>IN</option><option value="その他" ${ui.start.backSection==='その他'?'selected':''}>その他</option></select><input class="input" id="start-back-other" value="${esc(ui.start.backSectionOther)}" placeholder="例：東" style="margin-top:8px;${ui.start.backSection==='その他'?'':'display:none'}"></div></div>
- <div class="grid2"><div class="field"><div class="label">ティー</div><select class="select" id="start-tee">${['Back','Regular','Front','Ladies','その他'].map(v=>`<option ${ui.start.tee===v?'selected':''}>${v}</option>`).join('')}</select><input class="input" id="start-tee-other" value="${esc(ui.start.teeOther)}" placeholder="ティー名を入力" style="margin-top:8px;${ui.start.tee==='その他'?'':'display:none'}"></div><div class="field"><div class="label">天気</div><select class="select" id="start-weather">${['晴','曇','雨','雪'].map(v=>`<option ${ui.start.weather===v?'selected':''}>${v}</option>`).join('')}</select></div></div>
- <div class="field"><div class="label">グリーン</div><input class="input" id="start-green" value="${esc(ui.start.green)}" placeholder="A / B / ベントなど"></div></div>
- <div class="section-head"><h2>ホール情報</h2><span>Par / 距離</span></div>
- <div class="segment two" style="margin-bottom:10px"><button class="${half===0?'active':''}" data-action="course-half" data-value="0" data-section-tab="front">${esc(frontLabel)}</button><button class="${half===1?'active':''}" data-action="course-half" data-value="1" data-section-tab="back">${esc(backLabel)}</button></div>
- <div class="card">${hs.map(h=>`<div class="row" style="margin-bottom:8px"><strong style="width:32px">${h.number}H</strong><select class="select hole-par" data-hole="${h.number}" style="min-height:42px;width:88px">${[3,4,5,6].map(p=>`<option ${h.par===p?'selected':''}>${p}</option>`).join('')}</select><input class="input hole-distance" data-hole="${h.number}" type="number" inputmode="numeric" value="${h.distance}" style="min-height:42px"><span class="small muted">yd</span></div>`).join('')}</div>
- <button class="primary" data-action="start-round">この設定で開始</button></div>`}
+ const c=data.courses.find(x=>x.id===ui.start.courseId);
+ const half=ui.start.holeCount===9?0:ui.courseEditHalf;
+ const hs=(c?.holes||ui.start.newCourseHoles).slice(half?9:0,half?18:9);
+ const labels=resolvedStartSections();
+ const existing=Boolean(c),any=data.courses.length>0;
+ const options=(values,selected)=>values.map(v=>'<option value="'+esc(v)+'" '+(v===selected?'selected':'')+'>'+esc(v)+'</option>').join('');
+ const sectionField=(label,key,otherKey)=>{
+   const value=ui.start[key],id=key==='frontSection'?'front':'back';
+   return '<div class="field"><div class="label">'+label+'</div><select class="select" id="start-'+id+'-section">'+options(['OUT','IN','その他'],value)+'</select>'
+    +(value==='その他'?'<input class="input" id="start-'+id+'-other" maxlength="24" value="'+esc(ui.start[otherKey])+'" placeholder="例：'+(id==='front'?'西':'東')+'" style="margin-top:8px">':'')+'</div>';
+ };
+ const tees=['Back','Regular','Front','Ladies','その他'];
+ const holeRows=hs.map(h=>'<div class="row" style="margin-bottom:8px"><strong style="width:32px">'+h.number+'H</strong><select class="select hole-par" data-hole="'+h.number+'" style="min-height:42px;width:88px">'+options([3,4,5,6],h.par)+'</select><input class="input hole-distance" data-hole="'+h.number+'" type="number" inputmode="numeric" value="'+esc(h.distance)+'" style="min-height:42px"><span class="small muted">yd</span></div>').join('');
+ const golfField=existing?
+   '<div class="field"><div class="label">ゴルフ場</div><select class="select" id="start-course">'+data.courses.map(x=>'<option value="'+esc(x.id)+'" '+(ui.start.courseId===x.id?'selected':'')+'>'+esc(x.name)+' / '+esc(x.tee)+'</option>').join('')+'</select></div>':
+   '<div class="field"><div class="label">新しいゴルフ場名</div><input class="input" id="start-course-name" maxlength="80" placeholder="例：〇〇カントリークラブ" value="'+esc(ui.start.courseName)+'"></div>';
+ return startHeader()+'<div class="page">'
+  +'<div class="card setup-block"><div class="card-title">ラウンド情報</div>'
+  +'<div class="field"><div class="label">プレー日</div><div class="setup-help" style="margin:0">'+esc(TODAY())+'（開始日を自動記録）</div></div>'
+  +'<div class="field"><div class="label">ホール数</div><div class="segment two"><button class="'+(ui.start.holeCount===18?'active':'')+'" data-action="start-hole-count" data-value="18">18ホール</button><button class="'+(ui.start.holeCount===9?'active':'')+'" data-action="start-hole-count" data-value="9">9ホール</button></div><input type="hidden" id="start-holecount" value="'+ui.start.holeCount+'"></div></div>'
+  +'<div class="card setup-block"><div class="card-title">ゴルフ場・コース</div>'
+  +'<div class="setup-help">登録済みのゴルフ場を選ぶか、新しいゴルフ場を登録してください。</div>'
+  +'<div class="setup-selector"><button class="'+(existing?'active':'')+'" data-action="start-course-mode" data-value="existing" '+(any?'':'disabled')+'>登録済みから選ぶ</button><button class="'+(!existing?'active':'')+'" data-action="start-course-mode" data-value="new">新しいゴルフ場を登録</button></div>'
+  +golfField
+  +'<div class="setup-grid">'+sectionField('前半コース','frontSection','frontSectionOther')+(ui.start.holeCount===18?sectionField('後半コース','backSection','backSectionOther'):'')+'</div>'
+  +(ui.start.holeCount===9?'<p class="setup-caption">9ホールの場合、後半コースは設定不要です。</p>':'')
+  +'</div>'
+  +'<div class="card setup-block"><div class="card-title">プレー設定</div>'
+  +'<div class="setup-grid"><div class="field"><div class="label">使用ティー</div><select class="select" id="start-tee">'+options(tees,ui.start.tee)+'</select>'
+  +(ui.start.tee==='その他'?'<input class="input" id="start-tee-other" maxlength="24" value="'+esc(ui.start.teeOther)+'" placeholder="ティー名" style="margin-top:8px">':'')+'</div>'
+  +'<div class="field"><div class="label">天気</div><select class="select" id="start-weather">'+options(['晴','曇','雨','雪'],ui.start.weather)+'</select></div></div>'
+  +'<div class="field"><div class="label">グリーン（手入力）</div><input class="input" id="start-green" maxlength="30" value="'+esc(ui.start.green)+'" placeholder="例：A / B / ベント"></div></div>'
+  +'<div class="section-head"><h2>ホール情報</h2><span>Par / 距離</span></div>'
+  +(ui.start.holeCount===18?'<div class="segment two" style="margin-bottom:10px"><button class="'+(half===0?'active':'')+'" data-action="course-half" data-value="0" data-section-tab="front">'+esc(labels[0])+'</button><button class="'+(half===1?'active':'')+'" data-action="course-half" data-value="1" data-section-tab="back">'+esc(labels[1])+'</button></div>':'')
+  +'<div class="card">'+holeRows+'</div><button class="primary" data-action="start-round" style="margin-top:16px">この設定で開始</button></div>';
+}
+
 function play(){
  const r=currentRound(); if(!r)return home(); const h=currentHole(r); if(!h)return''; const done=h.status==='done';
  const rs=roundStats(r),totalText=rs.holes?`TOTAL ${rs.total} (${scoreLabel(rs.diff)})`:'TOTAL —';
