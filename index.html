@@ -204,6 +204,20 @@ button{cursor:pointer}
 .hole-sheet-footer button{border:1px solid #E0E6EE;border-radius:10px;background:#fff;min-height:45px;font-size:13px;font-weight:800;color:var(--text)}
 .hole-sheet-footer button.next{background:var(--orange);color:#fff;border-color:var(--orange)}
 .hole-sheet-footer button:disabled{opacity:.36}
+
+/* Scorecard v3: scrollable aggregate columns and tee direction icons. */
+.sc-table-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding-bottom:3px}
+.sc-table-scroll::-webkit-scrollbar{height:3px}
+.sc-table-scroll::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+.sc-table-scroll .sc-grid{width:max-content;min-width:100%;grid-template-columns:initial;grid-auto-rows:minmax(36px,auto)}
+.sc-cell.sc-head-aggregate{background:var(--blue);font-size:10px;font-weight:850}
+.sc-cell.sc-head-total{background:#22344E}
+.sc-cell.sc-aggregate{background:#ECF3FF;color:#274779;font-size:10px;font-weight:800}
+.sc-cell.sc-aggregate-total{background:#E8EBF0;color:#1D293B}
+.sc-cell.sc-aggregate small{display:block;font-size:9px;font-weight:650;color:#6B7F9A;margin-top:2px}
+.sc-cell.sc-tee{gap:1px}
+.sc-cell .sc-tee-club{font-size:9px;font-weight:850}
+.sc-cell .sc-tee-arrow{display:block;color:var(--blue);font-size:17px;font-weight:750;line-height:1.1}
 </style>
 </head>
 <body><div id="app"></div>
@@ -599,29 +613,67 @@ function puttInput(r,h){
 }
 function completedHoleView(r,h){const last=h.number>=r.holeCount;return`<div class="card"><div class="card-title">${h.number}H 完了</div><div class="grid3"><div class="metric"><div class="metric-label">Score</div><div class="metric-value orange">${holeScore(h)}</div></div><div class="metric"><div class="metric-label">PUTT</div><div class="metric-value blue">${holePutts(h)}</div></div><div class="metric"><div class="metric-label">To Par</div><div class="metric-value">${scoreLabel(holeScore(h)-h.par)}</div></div></div><div class="grid2" style="margin-top:12px"><button class="secondary" data-action="open-current-hole-shots">ショット編集</button><button class="secondary" data-action="open-scorecard">スコアカード</button></div>${last?`<button class="primary" style="margin-top:12px" data-action="finish-round">ラウンド結果へ</button>`:`<button class="primary" style="margin-top:12px" data-action="next-hole">${h.number+1}Hへ</button>`}</div>`}
 function scorecardHeader(){return `<header class="settings-fixed-header"><button class="settings-back" data-go="${ui.scorecardReturnTo||'play'}">‹ 戻る</button><div class="settings-head-title">スコアカード</div><div class="settings-head-logo"><span class="shot">Shot</span> <span class="log">log</span></div></header>`}
+function scorecardTeeArrow(shot,isPar3){
+ if(!shot)return '—';
+ const dir=shot.directionMode==='green'&&shot.greenCell?shot.greenCell:shot.direction;
+ if(isPar3){
+  const arrows={'左奥':'↖','奥':'↑','右奥':'↗','左':'←','中央':'○','右':'→','左手前':'↙','手前':'↓','右手前':'↘'};
+  return arrows[dir]||'—';
+ }
+ const direct=shot.directionMode==='green'&&shot.greenCell?mapGreenToLR(shot.greenCell):shot.direction;
+ return {'左':'←','中央':'○','右':'→'}[direct]||'—';
+}
+function scorecardFwCounts(holes){
+ const eligible=holes.filter(h=>h.par>3&&holeScore(h)!=null).map(h=>h.shots.find(x=>x.type==='shot')).filter(Boolean);
+ return {made:eligible.filter(shot=>shot.landing==='FW').length,total:eligible.length};
+}
+function scorecardGirCounts(holes){
+ const finished=holes.filter(h=>holeScore(h)!=null);
+ const made=finished.filter(h=>{const shots=h.shots.filter(s=>s.type==='shot'),i=shots.findIndex(s=>s.landing==='Green');return i>=0&&i+1<=Math.max(1,h.par-2)}).length;
+ return {made,total:finished.length};
+}
+function scorecardSummaryCell(label,holes){
+ const done=holes.filter(h=>holeScore(h)!=null);
+ const countValues=key=>sum(holes.map(h=>h.shots.filter(shot=>shot.landing===key).length));
+ const tally=(counts)=>counts.total?`${Math.round(counts.made/counts.total*100)}%<small>${counts.made}/${counts.total}</small>`:'—';
+ let result='—';
+ if(label==='Par')result=sum(holes.map(h=>Number(h.par)||0));
+ else if(label==='Yard')result=sum(holes.map(h=>Number(h.distance)||0));
+ else if(label==='Score')result=done.length?sum(done.map(h=>holeScore(h))):'—';
+ else if(label==='PUTT')result=done.length?sum(done.map(h=>holePutts(h))):'—';
+ else if(label==='FW')result=tally(scorecardFwCounts(holes));
+ else if(label==='GIR')result=tally(scorecardGirCounts(holes));
+ else if(label==='Bunker')result=countValues('バンカー');
+ else if(label==='OB')result=countValues('OB');
+ else if(label==='Pen')result=sum(holes.map(h=>holePenalty(h)));
+ return result;
+}
 function scorecard(){
  const r=roundById(ui.scorecardRoundId)||currentRound();if(!r)return'';
  const st=roundStats(r),holes=r.holes,hasBack=holes.length>9,half=hasBack&&ui.scorecardHalf===1?1:0;
  const sections=Array.isArray(r.sections)?r.sections:['OUT','IN'],front=sections[0]||'OUT',back=sections[1]||'IN';
  const shown=holes.slice(half*9,half*9+9),finished=shown.filter(h=>holeScore(h)!=null),halfScore=sum(finished.map(h=>holeScore(h))),halfPar=sum(finished.map(h=>h.par));
- const fw=h=>{const sh=h.shots.find(x=>x.type==='shot');return h.par===3?'—':sh?(sh.landing==='FW'?'○':'×'):'—'};
+ const teeShot=h=>h.shots.find(x=>x.type==='shot');
  const gir=h=>{const sh=h.shots.filter(x=>x.type==='shot'),i=sh.findIndex(x=>x.landing==='Green');return i>=0&&i+1<=Math.max(1,h.par-2)?'○':(holeScore(h)!=null?'×':'—')};
+ const fw=h=>{const tee=teeShot(h);if(!tee)return holeScore(h)!=null?'×':'—';return tee.landing===(h.par===3?'Green':'FW')?'○':'×'};
  const rows=[
   ['Par',h=>h.par],['Yard',h=>h.distance],
   ['Score',h=>holeScore(h)??'—'],['PUTT',h=>h.shots.length||holeScore(h)!=null?holePutts(h):'—'],
   ['FW',fw],['GIR',gir],
-  ['Tee',h=>{const tee=h.shots.find(x=>x.type==='shot');return tee?`<span>${esc(tee.club||'—')}</span><small>${esc(shotDirectionText(tee)||'')}</small>`:'—'}],
+  ['Tee',h=>{const tee=teeShot(h);return tee?`<span class="sc-tee-club">${esc(tee.club||'—')}</span><span class="sc-tee-arrow" aria-label="${esc(shotDirectionText(tee)||'方向未記録')}">${scorecardTeeArrow(tee,h.par===3)}</span>`:'—'}],
   ['Bunker',h=>h.shots.length||holeScore(h)!=null?h.shots.filter(x=>x.landing==='バンカー').length:'—'],
   ['OB',h=>h.shots.length||holeScore(h)!=null?h.shots.filter(x=>x.landing==='OB').length:'—'],
   ['Pen',h=>h.shots.length||holeScore(h)!=null?holePenalty(h):'—']
  ];
- const head=`<div class="sc-cell sc-head sc-head-label">H</div>${shown.map(h=>`<button type="button" class="sc-cell sc-head" data-hole-sheet="${h.number}" aria-label="${h.number}ホールの履歴">${h.number}</button>`).join('')}`;
- const body=rows.map(([label,fn])=>`<div class="sc-cell sc-label">${label}</div>${shown.map(h=>{const v=fn(h),score=holeScore(h),cls=label==='Score'&&score!=null?(score<h.par?' sc-under':score>h.par?' sc-over':' sc-even'):(['FW','GIR'].includes(label)&&v==='○'?' sc-yes':'');return `<div class="sc-cell${label==='Tee'?' sc-tee':''}${cls}">${v}</div>`}).join('')}`).join('');
+ const aggregates=half===0?[{label:front,holes:shown,kind:'half'}]:[{label:back,holes:shown,kind:'half'},{label:'TOTAL',holes,kind:'total'}];
+ const gridColumns=`42px repeat(9,29px) ${aggregates.map(a=>a.kind==='total'?'62px':'54px').join(' ')}`;
+ const head=`<div class="sc-cell sc-head sc-head-label">H</div>${shown.map(h=>`<button type="button" class="sc-cell sc-head" data-hole-sheet="${h.number}" aria-label="${h.number}ホールの履歴">${h.number}</button>`).join('')}${aggregates.map(a=>`<div class="sc-cell sc-head sc-head-aggregate${a.kind==='total'?' sc-head-total':''}">${esc(a.label)}</div>`).join('')}`;
+ const body=rows.map(([label,fn])=>`<div class="sc-cell sc-label">${label}</div>${shown.map(h=>{const v=fn(h),score=holeScore(h),cls=label==='Score'&&score!=null?(score<h.par?' sc-under':score>h.par?' sc-over':' sc-even'):(['FW','GIR'].includes(label)&&v==='○'?' sc-yes':'');return `<div class="sc-cell${label==='Tee'?' sc-tee':''}${cls}">${v}</div>`}).join('')}${aggregates.map(a=>`<div class="sc-cell sc-aggregate${a.kind==='total'?' sc-aggregate-total':''}">${scorecardSummaryCell(label,a.holes)}</div>`).join('')}`).join('');
  const total=st.holes?st.total:'—',diff=st.holes?scoreLabel(st.diff):'—';
  return `${scorecardHeader()}<div class="page sc-page">
   <div class="sc-overview"><div><strong>${esc(r.courseName||'ラウンド')}</strong><small>${esc(r.date)} · ${esc(r.tee)} · ${holes.length}H${r.green?' · '+esc(r.green):''}</small></div><div class="sc-total"><strong>${total}</strong><small>TOTAL ${diff}</small></div></div>
   ${hasBack?`<div class="sc-switch"><button class="${half===0?'active':''}" data-scorecard-half="0">${esc(front)} · 1〜9H</button><button class="${half===1?'active':''}" data-scorecard-half="1">${esc(back)} · 10〜18H</button></div>`:`<div class="sc-section">${esc(front)} · 1〜9H</div>`}
-  <div class="sc-board"><div class="sc-grid">${head}${body}</div><div class="sc-board-foot"><span>ホール番号でショット履歴を表示</span><strong>${esc(half?back:front)} <b>${finished.length?halfScore:'—'}</b>${finished.length?' ('+scoreLabel(halfScore-halfPar)+')':''}</strong></div></div>
+  <div class="sc-board"><div class="sc-table-scroll" aria-label="スコアカード表。横スクロールで合計列を表示できます"><div class="sc-grid" style="grid-template-columns:${gridColumns}">${head}${body}</div></div><div class="sc-board-foot"><span>ホール番号でショット履歴を表示</span><strong>${esc(half?back:front)} <b>${finished.length?halfScore:'—'}</b>${finished.length?' ('+scoreLabel(halfScore-halfPar)+')':''}</strong></div></div>
   <div class="sc-legend"><span><i class="sc-dot sc-dot-over"></i>ボギー以上</span><span><i class="sc-dot sc-dot-under"></i>バーディー以下</span></div>
   <div class="sc-summary"><div class="card-title">ラウンドサマリー</div><div class="sc-stats"><div><small>PUTT</small><strong>${st.holes?st.putts:'—'}</strong></div><div><small>FWキープ</small><strong>${st.fwD?st.fw+'%':'—'}</strong></div><div><small>GIR</small><strong>${st.girD?st.gir+'%':'—'}</strong></div></div></div>
   ${ui.scorecardReturnTo==='result'&&r!==data.activeRound?'<button class="secondary" style="width:100%;margin-top:15px" data-go="result">結果サマリーへ戻る</button>':''}
