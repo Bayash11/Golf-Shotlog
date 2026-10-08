@@ -1074,7 +1074,11 @@ function saveCourseFields(){
  // Do not modify an existing saved course while the new-course draft is being edited.
  if(c)persist();
 }
-function saveShot(skip=false){const r=currentRound(),h=currentHole(r),d=h.draft||shotDraft();const remEl=document.getElementById('remaining-after'),distEl=document.getElementById('direct-distance');if(remEl)d.remainingAfterY=remEl.value;if(distEl)d.directDistance=distEl.value;const before=Number(h.currentRemainingY||0),direct=Number(d.directDistance);let after;if(direct>0)after=Math.max(0,before-direct);else after=d.remainingAfterY===''?before:Number(d.remainingAfterY);d.remainingAfterY=after;const estimated=Math.max(0,before-after);const s={id:uid(),type:'shot',num:h.shots.length+1,club:skip?'':d.club,directionMode:d.directionMode,direction:skip?'':d.direction,greenCell:skip?'':d.greenCell,flight:skip?'':d.flight,quality:skip?'':(d.misses.length?'ミス':(d.goods.length?'Good':'')),goods:skip?[]:[...d.goods],misses:skip?[]:[...d.misses],feel:skip?[]:feelArray(d.feel),shotType:d.shotType,slope:skip?[]:slopeArray(d.slope),lie:d.lie,landing:skip?'':d.landing,remainingBeforeY:before,remainingAfterY:after,shotDistance:direct||estimated||null,estimatedDistance:!direct,penalty:skip?0:Number(d.penalty||0)};h.shots.push(s);h.currentRemainingY=after;if(!skip&&d.landing==='Green'){h.stage='putt';h.currentRemainingY=0;h.currentPuttRemainingM=null}h.draft=shotDraft()}
+// Share the direct-distance arithmetic between entry, editing, and shot creation.
+function remainingAfterShotDistance(before,distance){
+ return Math.max(0,Number(before||0)-Number(distance||0));
+}
+function saveShot(skip=false){const r=currentRound(),h=currentHole(r),d=h.draft||shotDraft();const remEl=document.getElementById('remaining-after'),distEl=document.getElementById('direct-distance');if(remEl)d.remainingAfterY=remEl.value;if(distEl)d.directDistance=distEl.value;const before=Number(h.currentRemainingY||0),direct=skip?0:Number(d.directDistance);let after;if(skip)after=before;else if(direct>0)after=remainingAfterShotDistance(before,direct);else after=d.remainingAfterY===''?before:Number(d.remainingAfterY);d.remainingAfterY=after;const estimated=Math.max(0,before-after);const s={id:uid(),type:'shot',num:h.shots.length+1,club:skip?'':d.club,directionMode:d.directionMode,direction:skip?'':d.direction,greenCell:skip?'':d.greenCell,flight:skip?'':d.flight,quality:skip?'':(d.misses.length?'ミス':(d.goods.length?'Good':'')),goods:skip?[]:[...d.goods],misses:skip?[]:[...d.misses],feel:skip?[]:feelArray(d.feel),shotType:skip?'':d.shotType,slope:skip?[]:slopeArray(d.slope),lie:skip?'':d.lie,landing:skip?'':d.landing,remainingBeforeY:before,remainingAfterY:after,shotDistance:direct||estimated||null,estimatedDistance:!direct,penalty:skip?0:Number(d.penalty||0)};h.shots.push(s);h.currentRemainingY=after;if(!skip&&d.landing==='Green'){h.stage='putt';h.currentRemainingY=0;h.currentPuttRemainingM=null}h.draft=shotDraft()}
 function savePutt(){const h=currentHole(),d=h.puttDraft;const cup=d.cell==='Cup-in';const after=cup?0:Number(d.afterM||0);h.shots.push({id:uid(),type:'putt',num:h.shots.length+1,puttBeforeM:Number(h.currentPuttRemainingM||0),puttAfterM:after,puttLie:[...d.lie],puttCell:d.cell});h.currentPuttRemainingM=after;h.puttDraft=puttDraft();if(cup)finalizeHole(h,holeComputedScore(h))}
 function finalizeHole(h,score){h.status='done';h.stage='done';h.score=Number(score);h.currentRemainingY=0;h.currentPuttRemainingM=0}
 function finishRound(){const r=currentRound();r.completedAt=new Date().toISOString();data.rounds.push(r);data.activeRound=null;ui.viewRoundId=r.id;ui.resultReturnTo='home';ui.resultFromFinish=true;ui.prev='home';ui.screen='result';persist();render()}
@@ -1296,8 +1300,27 @@ function onInput(e){const el=e.target;
  else if(el.id==='start-back-other'){ui.start.backSectionOther=el.value;const tab=document.querySelector('[data-section-tab="back"]');if(tab)tab.textContent=el.value.trim()||'その他'}
  else if(el.id==='start-tee-other')ui.start.teeOther=el.value;
  else if(el.id==='start-green')ui.start.green=el.value;
- else if(el.id==='direct-distance'){const h=currentHole(),v=Number(el.value),rem=document.getElementById('remaining-after');if(h&&rem&&Number.isFinite(v)&&v>=0){const after=Math.max(0,Number(h.currentRemainingY||0)-v);rem.value=after;h.draft.directDistance=el.value;h.draft.remainingAfterY=after;persist()}}
- else if(el.id==='edit-shot-distance'&&ui.modal?.type==='editShot'){const r=currentRound(),h=r?.holes.find(x=>x.number===Number(ui.modal.hole)),sh=h?.shots?.[Number(ui.modal.index)],v=Number(el.value),rem=document.getElementById('edit-shot-remaining');if(sh&&rem&&Number.isFinite(v)&&v>=0){const after=Math.max(0,Number(sh.remainingBeforeY||0)-v);rem.value=after;ui.modal.draft.directDistance=el.value;ui.modal.draft.remainingAfterY=after}}
+ else if(el.id==='direct-distance'){
+  const h=currentHole(),rem=document.getElementById('remaining-after'),raw=String(el.value||'').trim();
+  if(h&&rem){
+   h.draft.directDistance=raw;
+   if(raw!==''){
+    const value=Number(raw);
+    if(Number.isFinite(value)&&value>=0){const after=remainingAfterShotDistance(h.currentRemainingY,value);rem.value=after;h.draft.remainingAfterY=after}
+   }
+   persist();
+  }
+ }
+ else if(el.id==='edit-shot-distance'&&ui.modal?.type==='editShot'){
+  const r=currentRound(),h=r?.holes.find(x=>x.number===Number(ui.modal.hole)),sh=h?.shots?.[Number(ui.modal.index)],rem=document.getElementById('edit-shot-remaining'),raw=String(el.value||'').trim();
+  if(sh&&rem){
+   ui.modal.draft.directDistance=raw;
+   if(raw!==''){
+    const value=Number(raw);
+    if(Number.isFinite(value)&&value>=0){const after=remainingAfterShotDistance(sh.remainingBeforeY,value);rem.value=after;ui.modal.draft.remainingAfterY=after}
+   }
+  }
+ }
  else if(el.id==='putt-after-custom'){const h=currentHole(),v=Number(el.value);if(h&&Number.isFinite(v)&&v>=0){h.puttDraft.afterM=Math.round(v*2)/2;persist();syncLivePuttControls()}}
  else if(el.id==='edit-putt-after-custom'&&ui.modal?.type==='editShot'){const v=Number(el.value);if(Number.isFinite(v)&&v>=0)ui.modal.draft.afterM=Math.round(v*2)/2}
 }
