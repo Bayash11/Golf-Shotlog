@@ -723,10 +723,12 @@ function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','club-detail'].includes(ui.screen);
  const previousPlayScroll=document.querySelector('.round-play-body')?.scrollTop||0;
  const previousScorecardScroll=document.querySelector('.sc-table-scroll')?.scrollLeft??null;
+ const previousEditSheetScroll=ui.modal?.type==='editShot'?document.querySelector('.modal-back .sheet')?.scrollTop??null:null;
  const screenChanged=lastRenderedScreen!==ui.screen;
  const pageKey=[ui.screen,ui.screen==='data'?ui.dataTab:'',data.activeRound?.id||'',data.activeRound?.currentHoleIndex??'',currentHole()?.shots?.length??'',currentHole()?.stage||'',currentHole()?.currentPuttRemainingM??'',ui.viewRoundId||'',ui.scorecardRoundId||'',ui.clubId||''].join('|');
  const pageChanged=lastRenderedPageKey!==pageKey;
  root.innerHTML=`<main class="shell ${noNav?'no-nav':''}">${route()}</main>${!noNav?nav():''}${modal()}${ui.toast?`<div class="toast">${esc(ui.toast)}</div>`:''}`;
+ if(previousEditSheetScroll!==null){const editSheet=document.querySelector('.modal-back .sheet');if(editSheet)editSheet.scrollTop=previousEditSheetScroll;}
  const playBody=document.querySelector('.round-play-body');
  if(playBody&&!pageChanged)playBody.scrollTop=previousPlayScroll;
  const scoreArea=ui.screen==='scorecard'?document.querySelector('.sc-table-scroll'):null;
