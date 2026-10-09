@@ -54,7 +54,7 @@ button{cursor:pointer}
 .settings-head-title{text-align:center;font-size:17px;font-weight:800}
 .club-detail-head-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
 .settings-head-logo{justify-self:end;white-space:nowrap;font-size:16px;font-weight:850;letter-spacing:-.6px}.settings-head-logo .shot{color:#202635}.settings-head-logo .log{color:var(--orange)}
-.round-screen{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:30;width:100%;max-width:430px;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.round-screen{position:fixed;top:var(--round-visual-top,0px);left:50%;transform:translateX(-50%);z-index:30;width:100%;max-width:430px;height:100vh;height:var(--round-visual-height,100dvh);display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .round-sticky-stack{position:relative;flex:0 0 auto;z-index:45;background:rgba(248,250,252,.98);backdrop-filter:blur(12px);border-bottom:1px solid rgba(221,227,234,.9)}
 .round-fixed-header{position:relative;z-index:2;min-height:64px;padding:calc(5px + env(safe-area-inset-top)) 12px 7px;background:transparent;border-bottom:0;display:grid;grid-template-columns:74px 1fr auto;align-items:center;gap:8px}
 .round-hole-wrap{padding:8px 16px 10px;background:transparent}
@@ -424,6 +424,13 @@ button{cursor:pointer}
  .round-input-primary .segment.two{flex-basis:144px}
 }
 
+
+/* iOS keyboard: do not allow the document below the round recorder to scroll.
+   The input list scrolls independently; the header remains outside that list. */
+body:has(.round-screen){height:100dvh;overflow:hidden}
+body:has(.round-screen) #app{height:100dvh;min-height:0;overflow:hidden}
+body:has(.round-screen) .shell.no-nav{height:100dvh;min-height:0;padding-bottom:0}
+
 </style>
 </head>
 <body><div id="app"></div>
@@ -675,6 +682,43 @@ function resetViewportTop(){
  const shell=document.querySelector('.shell');if(shell)shell.scrollTop=0;
  const playBody=document.querySelector('.round-play-body');if(playBody)playBody.scrollTop=0;
 }
+/* On iOS, opening the software keyboard can pan the visual viewport without
+   moving fixed elements. Keep the round recorder attached to that viewport. */
+function syncRoundVisualViewport(){
+ const screen=document.querySelector('.round-screen');
+ if(!screen)return;
+ const viewport=window.visualViewport;
+ if(viewport&&viewport.height>0){
+  screen.style.setProperty('--round-visual-top',Math.max(0,viewport.offsetTop||0)+'px');
+  screen.style.setProperty('--round-visual-height',viewport.height+'px');
+ }
+ const body=screen.querySelector('.round-play-body'),focused=document.activeElement;
+ if(!body||!focused||!body.contains(focused)||!focused.matches('input, textarea, select'))return;
+ const view=body.getBoundingClientRect(),input=focused.getBoundingClientRect();
+ const padding=14;
+ if(input.bottom>view.bottom-padding)body.scrollTop+=input.bottom-view.bottom+padding;
+ else if(input.top<view.top+padding)body.scrollTop+=input.top-view.top-padding;
+}
+let roundViewportFrame=0;
+function requestRoundVisualViewportSync(){
+ if(roundViewportFrame)return;
+ roundViewportFrame=window.requestAnimationFrame(()=>{
+  roundViewportFrame=0;
+  syncRoundVisualViewport();
+ });
+}
+if(window.visualViewport){
+ window.visualViewport.addEventListener('resize',requestRoundVisualViewportSync,{passive:true});
+ window.visualViewport.addEventListener('scroll',requestRoundVisualViewportSync,{passive:true});
+}
+window.addEventListener('resize',requestRoundVisualViewportSync,{passive:true});
+document.addEventListener('focusin',e=>{
+ if(e.target.closest?.('.round-play-body'))requestRoundVisualViewportSync();
+});
+document.addEventListener('focusout',e=>{
+ if(e.target.closest?.('.round-play-body'))requestRoundVisualViewportSync();
+});
+
 function render(){
  const root=document.getElementById('app'); const noNav=['start','play','scorecard','result','shot-history','howto','club-detail'].includes(ui.screen);
  const previousPlayScroll=document.querySelector('.round-play-body')?.scrollTop||0;
@@ -692,6 +736,7 @@ function render(){
   scoreArea.addEventListener('scroll',()=>scorecardTrackScroll(scoreArea),{passive:true});
  }
  root.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','none');el.setAttribute('spellcheck','false')});
+ if(ui.screen==='play')syncRoundVisualViewport();
  syncStorageAlert();
  if(!historyReady){
    history.replaceState(historyState(),'');
