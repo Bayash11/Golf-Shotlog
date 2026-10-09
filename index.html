@@ -390,6 +390,40 @@ button{cursor:pointer}
  .analysis-club-sort button{flex:1}
 }
 
+
+/* Round entry: three input groups and a fixed bottom action area. */
+.round-play-body.with-round-action{padding-bottom:28px}
+.round-input-primary,.round-input-panel{border-radius:16px}
+.round-input-primary{border:1px solid rgba(255,106,36,.25)}
+.round-input-panel{padding:16px;border:1px solid #E9EDF3}
+.round-input-primary .round-input-group-title{margin-top:16px}
+.round-input-group-title{display:flex;align-items:center;gap:9px;margin:0 0 17px;font-size:16px;font-weight:850;line-height:1.4;color:var(--text)}
+.round-input-group-title:before{content:"";display:block;flex:0 0 auto;width:4px;height:19px;border-radius:9px;background:var(--orange)}
+.round-input-primary .label,.round-input-panel .label{font-size:13px;font-weight:750;margin-bottom:9px}
+.round-input-panel .chip{min-height:42px}
+.round-input-panel .chips{gap:8px}
+.round-input-panel .grid2>div,.round-input-panel .grid2 input{min-width:0}
+.round-input-panel .grid2 .row{gap:5px}
+.round-input-panel .grid2 .row .small{flex:0 0 auto}
+.round-input-panel .input{padding:10px 8px;font-size:16px}
+.round-input-primary .segment.two{flex:0 0 170px;max-width:54%}
+.round-action-footer{position:relative;z-index:48;flex:0 0 auto;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.98);border-top:1px solid #E7EBF0;box-shadow:0 -6px 22px rgba(23,32,51,.06)}
+.round-action-footer .primary{min-height:50px}
+.round-action-secondary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:3px}
+.round-action-secondary button{display:flex;align-items:center;justify-content:center;min-height:44px;line-height:1.35;padding:8px 4px;border:0;background:transparent;font-size:12px;font-weight:750;color:var(--sub);touch-action:manipulation}
+.round-action-secondary button:last-child{color:#B42318}
+.round-action-secondary button:focus-visible,.round-action-footer .primary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.round-action-secondary button:active{background:#F2F4F7;border-radius:9px}
+@supports selector(:has(*)){
+ /* Hide footer during text/numeric input to avoid iPhone keyboard overlap. */
+ .round-screen:has(.round-play-body input:focus) .round-action-footer{display:none}
+}
+@media(max-width:360px){
+ .round-input-primary,.round-input-panel{padding:13px}
+ .round-action-footer{padding-left:12px;padding-right:12px}
+ .round-input-primary .segment.two{flex-basis:144px}
+}
+
 </style>
 </head>
 <body><div id="app"></div>
@@ -501,6 +535,8 @@ function syncLiveShotButtons(){
  document.querySelectorAll('[data-draft-miss]').forEach(btn=>btn.classList.toggle('active',(d.misses||[]).includes(btn.dataset.draftMiss)));
  const penaltyWrap=document.getElementById('shot-penalty-options');
  if(penaltyWrap)penaltyWrap.hidden=!['OB','ハザード','ペナルティ'].includes(d.landing);
+ const footerSave=document.querySelector('.round-action-footer [data-action="save-shot"]');
+ if(footerSave)footerSave.textContent=d.landing==='Green'?'記録してパットへ':'記録して次のショット';
 }
 function mutateShotDraftInPlace(fn){fn();persist();syncLiveShotButtons()}
 function syncLivePuttControls(){
@@ -795,10 +831,20 @@ function play(){
  const r=currentRound(); if(!r)return home(); const h=currentHole(r); if(!h)return''; const done=h.status==='done';
  const rs=roundStats(r),totalText=rs.holes?`TOTAL ${rs.total} (${scoreLabel(rs.diff)})`:'TOTAL —';
  const holeCard=`<div class="top-hole"><div class="hole-main"><div class="hole-id">${h.number}H</div><div class="hole-meta-wrap"><button class="hole-info-edit" data-action="edit-hole-info">Par${h.par}・${h.distance}yd <span class="hole-edit-mark">✎</span></button></div><div class="hole-side"><div class="hole-total">${totalText}</div>${done?`<div class="hole-result">${holeScore(h)} (${scoreLabel(holeScore(h)-h.par)})・${holePutts(h)} PUTT</div>`:`<div class="hole-remaining">${h.stage==='putt'?`${h.currentPuttRemainingM??'—'}m`:`残り ${Math.round(h.currentRemainingY||0)}yd`}</div>`}</div></div></div>`;
- return`<div class="round-screen"><div class="round-sticky-stack">${roundHeader()}<div class="round-hole-wrap">${holeCard}</div></div><div class="page round-play-body">
+ return`<div class="round-screen"><div class="round-sticky-stack">${roundHeader()}<div class="round-hole-wrap">${holeCard}</div></div><div class="page round-play-body${done?'':' with-round-action'}">
  ${h.shots.map((s,i)=>collapsedShot(s,i,h)).join('')}
  ${done?completedHoleView(r,h):h.stage==='putt'?puttInput(r,h):shotInput(r,h)}
- </div></div>`}
+ </div>${done?'':roundActionFooter(h)}</div>`}
+function roundActionFooter(h){
+ if(h.stage==='putt'){
+  if(h.currentPuttRemainingM==null)return '<div class="round-action-footer" role="group" aria-label="最初のパット距離"><button type="button" class="primary" data-action="set-first-putt-custom">パット入力へ</button></div>';
+  const cup=h.puttDraft?.cell==='Cup-in';
+  return '<div class="round-action-footer" role="group" aria-label="パット記録"><button type="button" class="primary" id="save-putt-button" data-action="save-putt">'+(cup?'Cup-in・ホールアウト':'パットを記録')+'</button></div>';
+ }
+ const putt=h.draft?.landing==='Green';
+ return '<div class="round-action-footer" role="group" aria-label="ショット記録"><button type="button" class="primary" data-action="save-shot">'+(putt?'記録してパットへ':'記録して次のショット')+'</button>'
+  +'<div class="round-action-secondary"><button type="button" data-action="skip-shot">未入力で次のショット</button><button type="button" data-action="manual-holeout">ホールアウト</button></div></div>';
+}
 function collapsedShot(s,i,h){
  const strokeNo=shotStrokeNumber(h,i);
  const del='<button class="shot-delete-x" data-action="delete-current-shot" data-shot-index="'+i+'" aria-label="'+strokeNo+'打目を削除">×</button>';
@@ -812,31 +858,35 @@ function shotInput(r,h){
  const d=h.draft||shotDraft(); if(!Array.isArray(d.goods))d.goods=[];if(!Array.isArray(d.misses))d.misses=[]; const settings=data.settings; const greenAuto=(h.currentRemainingY||0)<=Number(settings.greenAutoYards||150); if(greenAuto&&d.directionMode==='normal')d.directionMode='green';
  const green=d.directionMode==='green';
  const styles=enabledShotStyles();
+ const showEvaluation=Boolean(settings.inputs.feel||enabledFeedback('good').length||enabledFeedback('miss').length||settings.inputs.slope||settings.inputs.lie);
  const strokeNo=nextStrokeNumber(h);
- return`<div class="shot-card current"><div class="row"><span class="shot-num">${strokeNo}</span><div><div class="card-title" style="margin:0">${strokeNo}打目を記録</div><div class="tiny muted">空欄でも次打へ進めます</div></div></div>
- <div class="divider"></div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.filter(c=>c.clubType!=='putter'&&c.name!=='パター'&&c.name!=='PT').map(c=>`<div class="club-btn tap-choice ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(c.name)}</div>`).join('')}</div>
+ return`<div class="shot-card current round-input-primary"><div class="row"><span class="shot-num">${strokeNo}</span><div><div class="card-title" style="margin:0">${strokeNo}打目を記録</div><div class="tiny muted">空欄でも次打へ進めます</div></div></div>
+ <div class="round-input-group-title">基本入力</div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.filter(c=>c.clubType!=='putter'&&c.name!=='パター'&&c.name!=='PT').map(c=>`<div class="club-btn tap-choice ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(c.name)}</div>`).join('')}</div>
  <div class="divider"></div><div class="row between"><div class="label" style="margin:0">方向</div><div class="segment two" style="width:170px"><div class="tap-choice ${!green?'active':''}" data-draft="directionMode" data-value="normal">通常</div><div class="tap-choice ${green?'active':''}" data-draft="directionMode" data-value="green">グリーン</div></div></div>
  <div style="margin-top:10px">${green?greenDirection(d):normalDirection(d)}</div>
  ${settings.inputs.ballFlight?`<div class="divider"></div><div class="label">球筋</div><div class="grid3">${BALL_FLIGHTS.map(v=>`<div class="chip blue tap-choice ${d.flight===v?'active':''}" data-draft="flight" data-value="${v}">${v}</div>`).join('')}</div>`:''}
  ${styles.length?`<div class="divider"></div><div class="label">打ち方</div><div class="chips">${styles.map(v=>`<div class="chip tap-choice ${d.shotType===v?'active':''}" data-draft="shotType" data-value="${v}">${v}</div>`).join('')}</div>`:''}
+ </div>
+ ${showEvaluation?`<div class="shot-card round-input-panel"><div class="round-input-group-title">打感・状況・評価</div>`:''}
  ${settings.inputs.feel?`<div class="divider"></div><div class="label">打感</div><div class="grid3">${FEEL_PRIMARY.map(v=>`<div class="chip tap-choice ${feelArray(d.feel).includes(v)?'active':''}" data-feel="${v}">${v}</div>`).join('')}</div><div class="grid2" style="grid-template-columns:repeat(4,1fr);margin-top:8px">${FEEL_SECONDARY.map(v=>`<div class="chip tap-choice ${feelArray(d.feel).includes(v)?'active':''}" data-feel="${v}">${v}</div>`).join('')}</div>`:''}
  ${enabledFeedback('good').length?`<div class="divider"></div><div class="label">Good</div><div class="chips">${enabledFeedback('good').map(v=>`<div class="chip tap-choice ${d.goods.includes(v)?'active':''}" data-draft-good="${esc(v)}">${esc(v)}</div>`).join('')}</div>`:''}
  ${enabledFeedback('miss').length?`<div class="divider"></div><div class="label">ミス</div><div class="chips">${enabledFeedback('miss').map(v=>`<div class="chip tap-choice ${d.misses.includes(v)?'active':''}" data-draft-miss="${esc(v)}">${esc(v)}</div>`).join('')}</div>`:''}
  ${settings.inputs.slope?`<div class="divider"></div><div class="label">傾斜</div><div class="grid2">${['左足上がり','左足下がり','つま先上がり','つま先下がり'].map(v=>`<div class="chip tap-choice ${slopeArray(d.slope).includes(v)?'active':''}" data-slope="${v}">${v}</div>`).join('')}</div>`:''}
  ${settings.inputs.lie?`<div class="divider"></div><div class="label">ライ</div><div class="chips">${SHOT_LIES.map(v=>`<div class="chip tap-choice ${d.lie===v?'active':''}" data-draft="lie" data-value="${v}">${v}</div>`).join('')}</div>`:''}
- <div class="divider"></div><div class="label">到着地点</div><div class="chips">${SHOT_LANDINGS.map(v=>`<div class="chip tap-choice ${d.landing===v?'active':''}" data-draft="landing" data-value="${v}">${v}</div>`).join('')}</div>
+ ${showEvaluation?'</div>':''}
+ <div class="shot-card round-input-panel"><div class="round-input-group-title">到着地点・距離</div><div class="label">到着地点</div><div class="chips">${SHOT_LANDINGS.map(v=>`<div class="chip tap-choice ${d.landing===v?'active':''}" data-draft="landing" data-value="${v}">${v}</div>`).join('')}</div>
  <div id="shot-penalty-options" ${(d.landing==='OB'||d.landing==='ハザード'||d.landing==='ペナルティ')?'':'hidden'}><div class="label" style="margin-top:12px">罰打</div><div class="grid3">${[1,2,3].map(v=>`<div class="chip tap-choice ${Number(d.penalty)===v?'active':''}" data-draft="penalty" data-value="${v}">+${v}${v===3?'（その他）':''}</div>`).join('')}</div></div>
  <div class="divider"></div><div class="grid2"><div><div class="label">ショット後の残り</div><div class="row"><input class="input" id="remaining-after" type="number" inputmode="decimal" placeholder="例 142" value="${esc(d.remainingAfterY)}"><span class="small muted">yd</span></div></div><div><div class="label">直接飛距離（任意）</div><div class="row"><input class="input" id="direct-distance" type="number" inputmode="decimal" placeholder="例 235" value="${esc(d.directDistance)}"><span class="small muted">yd</span></div></div></div>
- <div class="divider"></div><button class="primary" data-action="save-shot">${d.landing==='Green'?'記録してパットへ':'記録して次のショット'}</button><button class="ghost" style="width:100%;margin-top:9px" data-action="skip-shot">未入力で次のショット</button><button class="header-btn danger" style="width:100%;margin-top:8px" data-action="manual-holeout">ホールアウト</button></div>`}
+ </div>`}
 function normalDirection(d){return`<div class="direction3">${SHOT_DIRECTIONS.map(v=>`<div class="tap-choice ${d.direction===v?'active':''}" data-draft="direction" data-value="${v}">${v}</div>`).join('')}</div>`}
 function greenDirection(d){return`<div class="green-grid">${GREEN_CELLS.map(v=>`<div class="tap-choice ${d.greenCell===v?'active':''}" data-draft="greenCell" data-value="${v}">${v}</div>`).join('')}</div>`}
 function puttInput(r,h){
  const d=h.puttDraft||puttDraft();d.lie=(d.lie||['フラット']).map(puttLieLabel);
- if(h.currentPuttRemainingM==null){return '<div class="card"><div class="card-title">最初のパット距離</div><div class="card-sub">グリーンオン地点からカップまでの残距離を入力します。</div><div class="quick" style="margin:14px 0">'+PUTT_DISTANCE_PRESETS.map(v=>'<button data-action="set-first-putt" data-value="'+v+'">'+v+'m</button>').join('')+'</div><div class="row"><input class="input" id="first-putt-distance" type="number" inputmode="decimal" step="0.5" placeholder="その他"><span class="small muted">m</span></div><button class="primary" style="margin-top:12px" data-action="set-first-putt-custom">パット入力へ</button></div>'}
+ if(h.currentPuttRemainingM==null){return '<div class="card"><div class="card-title">最初のパット距離</div><div class="card-sub">グリーンオン地点からカップまでの残距離を入力します。</div><div class="quick" style="margin:14px 0">'+PUTT_DISTANCE_PRESETS.map(v=>'<button data-action="set-first-putt" data-value="'+v+'">'+v+'m</button>').join('')+'</div><div class="row"><input class="input" id="first-putt-distance" type="number" inputmode="decimal" step="0.5" placeholder="その他"><span class="small muted">m</span></div></div>'}
  const cells=PUTT_CELLS;
  const strokeNo=nextStrokeNumber(h);
  const firstPuttAdjust=holePutts(h)===0?'<div class="divider"></div><div class="label">最初のパット距離</div><div class="stepper first-putt-stepper"><div class="tap-choice" data-putt-current-step="-0.5">−0.5m</div><div class="step-val" id="putt-current-distance">'+Number(h.currentPuttRemainingM).toFixed(1)+'m</div><div class="tap-choice" data-putt-current-step="0.5">＋0.5m</div></div>':'';
- return '<div class="shot-card current"><div class="row"><span class="shot-num">'+strokeNo+'</span><div><div class="card-title" style="margin:0">'+(holePutts(h)+1)+' PUTT</div><div class="tiny muted">現在 <span id="putt-current-distance-inline">'+Number(h.currentPuttRemainingM).toFixed(1)+'</span>m</div></div></div>'+firstPuttAdjust+'<div class="divider"></div><div class="label">ライ</div><div class="grid3">'+PUTT_LIE_PRIMARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="grid2" style="margin-top:8px">'+PUTT_LIE_SECONDARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="divider"></div><div class="label">到達位置</div><div class="green-grid">'+cells.map(v=>'<div class="tap-choice '+(v==='Cup-in'?'cup ':'')+(d.cell===v?'active':'')+'" data-putt-cell="'+v+'">'+v+'</div>').join('')+'</div><div id="putt-distance-section" '+(d.cell==='Cup-in'?'hidden':'')+'><div class="divider"></div><div class="label">パット後の残り距離</div><div class="quick" style="margin-bottom:9px">'+PUTT_DISTANCE_PRESETS.map(v=>'<div class="tap-choice '+(Number(d.afterM)===Number(v)?'active':'')+'" data-putt-after="'+v+'">'+v+'m</div>').join('')+'</div><div class="stepper"><div class="tap-choice" data-putt-step="-0.5">−</div><div class="step-val">'+Number(d.afterM||0).toFixed(1)+'m</div><div class="tap-choice" data-putt-step="0.5">＋</div></div><div class="row" style="margin-top:9px"><input class="input" id="putt-after-custom" type="number" step="0.5" inputmode="decimal" placeholder="その他の距離"><span class="small muted">m</span></div></div><div class="divider"></div><button class="primary" id="save-putt-button" data-action="save-putt">'+(d.cell==='Cup-in'?'Cup-in・ホールアウト':'パットを記録')+'</button></div>';
+ return '<div class="shot-card current"><div class="row"><span class="shot-num">'+strokeNo+'</span><div><div class="card-title" style="margin:0">'+(holePutts(h)+1)+' PUTT</div><div class="tiny muted">現在 <span id="putt-current-distance-inline">'+Number(h.currentPuttRemainingM).toFixed(1)+'</span>m</div></div></div>'+firstPuttAdjust+'<div class="divider"></div><div class="label">ライ</div><div class="grid3">'+PUTT_LIE_PRIMARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="grid2" style="margin-top:8px">'+PUTT_LIE_SECONDARY.map(v=>'<div class="chip tap-choice '+(d.lie.includes(v)?'active':'')+'" data-putt-lie="'+v+'">'+v+'</div>').join('')+'</div><div class="divider"></div><div class="label">到達位置</div><div class="green-grid">'+cells.map(v=>'<div class="tap-choice '+(v==='Cup-in'?'cup ':'')+(d.cell===v?'active':'')+'" data-putt-cell="'+v+'">'+v+'</div>').join('')+'</div><div id="putt-distance-section" '+(d.cell==='Cup-in'?'hidden':'')+'><div class="divider"></div><div class="label">パット後の残り距離</div><div class="quick" style="margin-bottom:9px">'+PUTT_DISTANCE_PRESETS.map(v=>'<div class="tap-choice '+(Number(d.afterM)===Number(v)?'active':'')+'" data-putt-after="'+v+'">'+v+'m</div>').join('')+'</div><div class="stepper"><div class="tap-choice" data-putt-step="-0.5">−</div><div class="step-val">'+Number(d.afterM||0).toFixed(1)+'m</div><div class="tap-choice" data-putt-step="0.5">＋</div></div><div class="row" style="margin-top:9px"><input class="input" id="putt-after-custom" type="number" step="0.5" inputmode="decimal" placeholder="その他の距離"><span class="small muted">m</span></div></div></div>';
 }
 function completedHoleView(r,h){const last=h.number>=r.holeCount;return`<div class="card"><div class="card-title">${h.number}H 完了</div><div class="grid3"><div class="metric"><div class="metric-label">Score</div><div class="metric-value orange">${holeScore(h)}</div></div><div class="metric"><div class="metric-label">PUTT</div><div class="metric-value blue">${holePutts(h)}</div></div><div class="metric"><div class="metric-label">To Par</div><div class="metric-value">${scoreLabel(holeScore(h)-h.par)}</div></div></div><div class="grid2" style="margin-top:12px"><button class="secondary" data-action="open-current-hole-shots">ショット編集</button><button class="secondary" data-action="open-scorecard">スコアカード</button></div>${last?`<button class="primary" style="margin-top:12px" data-action="finish-round">ラウンド結果へ</button>`:`<button class="primary" style="margin-top:12px" data-action="next-hole">${h.number+1}Hへ</button>`}</div>`}
 function scorecardSetActiveHalf(half){
