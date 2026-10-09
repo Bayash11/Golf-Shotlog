@@ -771,6 +771,9 @@ function roundHeader(){return`<header class="round-fixed-header"><button class="
 const CLUB_TYPES=[['driver','ドライバー'],['fw','FW'],['ut','UT'],['iron','アイアン'],['wedge','ウェッジ'],['putter','パター'],['other','その他']];
 const CLUB_NAMES={driver:['Dr','MiniDr'],fw:['3W','5W','7W','9W'],ut:['2U','3U','4U','5U','6U','7U'],iron:['3I','4I','5I','6I','7I','8I','9I','P'],wedge:['42°','44°','46°','48°','50°','52°','54°','56°','58°','60°'],putter:['PT']};
 function clubTypeFromName(name){const v=String(name||'').trim();if(v==='Dr'||v==='MiniDr'||v==='1W')return'driver';if(/^\d+W$/i.test(v))return'fw';if(/^\d+U$/i.test(v))return'ut';if(/^(?:[3-9]I|P|PW)$/i.test(v))return'iron';if(/^\d{2}°$/.test(v))return'wedge';if(/^(?:PT|Putter|パター)$/i.test(v))return'putter';return'other'}
+// Preserve stored identifiers and existing rounds; shorten putter names only in UI.
+function isPutterClub(club){return club?.clubType==='putter'||clubTypeFromName(club?.name)==='putter'}
+function clubDisplayName(name,type=''){return type==='putter'||clubTypeFromName(name)==='putter'?'Pt':String(name??'')}
 function clubDraftRows(){return data.settings.clubs.map(x=>({id:x.id||uid(),name:x.name||'',typical:x.typical??'',clubType:x.clubType||clubTypeFromName(x.name)}))}
 function clubRowValid(row){const n=String(row.name||'').trim(),d=Number(row.typical);return !!row.clubType&&!!n&&Number.isFinite(d)&&d>=0&&d<=400}
 function clubDraftValid(){const rows=ui.clubDraft||[],names=rows.map(x=>String(x.name||'').trim()).filter(Boolean);return rows.length<=14&&rows.every(clubRowValid)&&!names.some((n,i)=>names.indexOf(n)!==i)}
@@ -897,7 +900,7 @@ function collapsedShot(s,i,h){
   const lies=(s.puttLie||[]).map(puttLieLabel).filter(Boolean);
   return '<div class="shot-card collapsed" data-action="shot-detail" data-shot="'+i+'" data-hole="'+h.number+'">'+del+'<div class="shot-summary"><span class="shot-num">'+strokeNo+'</span><div class="shot-main"><div class="shot-line">PUTT '+Number(s.puttBeforeM||0).toFixed(1)+'m → '+(s.puttAfterM===0?'Cup-in':Number(s.puttAfterM||0).toFixed(1)+'m')+'</div><div class="shot-mini">'+esc(lies.join('・')||'—')+' · '+esc(s.puttCell||'')+'</div></div><span class="chev">›</span></div></div>';
  }
- return '<div class="shot-card collapsed" data-action="shot-detail" data-shot="'+i+'" data-hole="'+h.number+'">'+del+'<div class="shot-summary"><span class="shot-num">'+strokeNo+'</span><div class="shot-main"><div class="shot-line">'+esc(s.club||'未入力')+' '+(s.shotDistance?Math.round(s.shotDistance)+'yd':'')+'</div><div class="shot-mini">'+esc(shotMetaParts(s).join('・')||'入力なし')+(s.penalty?' · +'+s.penalty:'')+'</div>'+feedbackTagsHtml(s)+'</div><span class="chev">›</span></div></div>';
+ return '<div class="shot-card collapsed" data-action="shot-detail" data-shot="'+i+'" data-hole="'+h.number+'">'+del+'<div class="shot-summary"><span class="shot-num">'+strokeNo+'</span><div class="shot-main"><div class="shot-line">'+esc(s.club?clubDisplayName(s.club):'未入力')+' '+(s.shotDistance?Math.round(s.shotDistance)+'yd':'')+'</div><div class="shot-mini">'+esc(shotMetaParts(s).join('・')||'入力なし')+(s.penalty?' · +'+s.penalty:'')+'</div>'+feedbackTagsHtml(s)+'</div><span class="chev">›</span></div></div>';
 }
 function shotInput(r,h){
  const d=h.draft||shotDraft(); if(!Array.isArray(d.goods))d.goods=[];if(!Array.isArray(d.misses))d.misses=[]; const settings=data.settings; const greenAuto=(h.currentRemainingY||0)<=Number(settings.greenAutoYards||150); if(greenAuto&&d.directionMode==='normal')d.directionMode='green';
@@ -906,7 +909,7 @@ function shotInput(r,h){
  const showEvaluation=Boolean(settings.inputs.feel||enabledFeedback('good').length||enabledFeedback('miss').length||settings.inputs.slope||settings.inputs.lie);
  const strokeNo=nextStrokeNumber(h);
  return`<div class="shot-card current round-input-primary"><div class="row"><span class="shot-num">${strokeNo}</span><div><div class="card-title" style="margin:0">${strokeNo}打目を記録</div><div class="tiny muted">空欄でも次打へ進めます</div></div></div>
- <div class="round-input-group-title">基本入力</div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.filter(c=>c.clubType!=='putter'&&c.name!=='パター'&&c.name!=='PT').map(c=>`<div class="club-btn tap-choice ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(c.name)}</div>`).join('')}</div>
+ <div class="round-input-group-title">基本入力</div><div class="label">クラブ</div><div class="club-grid">${data.settings.clubs.map(c=>`<div class="club-btn tap-choice ${d.club===c.name?'active':''}" data-draft="club" data-value="${esc(c.name)}">${esc(clubDisplayName(c.name,c.clubType))}</div>`).join('')}</div>
  <div class="divider"></div><div class="row between"><div class="label" style="margin:0">方向</div><div class="segment two" style="width:170px"><div class="tap-choice ${!green?'active':''}" data-draft="directionMode" data-value="normal">通常</div><div class="tap-choice ${green?'active':''}" data-draft="directionMode" data-value="green">グリーン</div></div></div>
  <div style="margin-top:10px">${green?greenDirection(d):normalDirection(d)}</div>
  ${settings.inputs.ballFlight?`<div class="divider"></div><div class="label">球筋</div><div class="grid3">${BALL_FLIGHTS.map(v=>`<div class="chip blue tap-choice ${d.flight===v?'active':''}" data-draft="flight" data-value="${v}">${v}</div>`).join('')}</div>`:''}
@@ -1091,7 +1094,7 @@ function result(){const r=roundById(ui.viewRoundId);if(!r)return'';const s=round
  <div class="card"><div class="card-title">スコア分布</div>${scoreDistPie(s.scoreDist)}</div>
  <h2 class="result-group-heading">ショット分析</h2>
  <div class="card"><div class="card-title">ショット傾向</div><div class="heat-legend"><span class="heat-key"><span class="heat-swatch heat-low"></span>少ない</span><span class="heat-key"><span class="heat-swatch heat-mid"></span>普通</span><span class="heat-key"><span class="heat-swatch heat-high"></span>多い</span></div>${share3('Par4・Par5 ティーショット方向',dir45,['左','中央','右'])}${heat9('Par3 方向（9マス）',p3)}${share3('球筋',fl,['ドロー','ストレート','フェード'])}${heat9('パター 到達位置（Cup-in除外）',putt,true)}</div>
- <div class="card"><div class="card-title">クラブ使用数</div>${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(clubs),1))).join('')||'<div class="empty">データなし</div>'}</div>
+ <div class="card"><div class="card-title">クラブ使用数</div>${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(clubDisplayName(k),v,Math.max(...Object.values(clubs),1))).join('')||'<div class="empty">データなし</div>'}</div>
  ${((enabledFeedback('good').length||enabledFeedback('miss').length)||good||miss)?`<div class="card"><div class="card-title">Good / ミス</div><div class="grid2"><div class="metric"><div class="metric-label">Good</div><div class="metric-value orange">${pct(good,good+miss)}%</div></div><div class="metric"><div class="metric-label">ミス</div><div class="metric-value blue">${pct(miss,good+miss)}%</div></div></div><div class="divider"></div>${Object.entries(misses).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(misses),1))).join('')||'<div class="small muted">ミス内訳なし</div>'}</div>`:''}
  <h2 class="result-group-heading">振り返り</h2>
  <div class="card result-memo-card"><div class="card-title">コースメモ</div><div class="card-sub" style="margin-bottom:10px">ラウンド中のメモは入力したホール番号付きでまとめています。この欄にそのまま追記・修正できます。</div><textarea class="result-memo-input" data-result-memo data-round-id="${r.id}" placeholder="ラウンド全体の振り返りを入力">${esc(roundMemoText(r))}</textarea><div class="result-memo-help">入力内容は自動保存されます。</div></div>
@@ -1238,7 +1241,7 @@ function allData(){
  ${heat9('Par3 方向（9マス）',p3)}
  ${share3('球筋',fl,['ドロー','ストレート','フェード'])}
  ${heat9('パター 到達位置（Cup-in除外）',putt,true)}</div>
- <div class="card"><div class="card-title">クラブ使用数</div>${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(clubs),1))).join('')||'<div class="empty">データなし</div>'}</div>
+ <div class="card"><div class="card-title">クラブ使用数</div>${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(clubDisplayName(k),v,Math.max(...Object.values(clubs),1))).join('')||'<div class="empty">データなし</div>'}</div>
  ${((enabledFeedback('good').length||enabledFeedback('miss').length)||good||miss)?`<div class="card"><div class="card-title">Good / ミス</div><div class="grid2">
  <div class="metric"><div class="metric-label">Good</div><div class="metric-value orange">${pct(good,good+miss)}%</div></div>
  <div class="metric"><div class="metric-label">ミス</div><div class="metric-value blue">${pct(miss,good+miss)}%</div></div></div><div class="divider"></div>
@@ -1284,7 +1287,7 @@ function recentData(){
  ${heat9('Par3 方向（9マス）',p3)}
  ${share3('球筋',fl,['ドロー','ストレート','フェード'])}
  ${heat9('パター 到達位置（Cup-in除外）',putt,true)}</div>
- <div class="card"><div class="card-title">クラブ使用数</div>${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,Math.max(...Object.values(clubs),1))).join('')||'<div class="empty">データなし</div>'}</div>
+ <div class="card"><div class="card-title">クラブ使用数</div>${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(clubDisplayName(k),v,Math.max(...Object.values(clubs),1))).join('')||'<div class="empty">データなし</div>'}</div>
  ${((enabledFeedback('good').length||enabledFeedback('miss').length)||good||miss)?`<div class="card"><div class="card-title">Good / ミス</div><div class="grid2">
  <div class="metric"><div class="metric-label">Good</div><div class="metric-value orange">${pct(good,good+miss)}%</div></div>
  <div class="metric"><div class="metric-label">ミス</div><div class="metric-value blue">${pct(miss,good+miss)}%</div></div></div><div class="divider"></div>
@@ -1310,15 +1313,15 @@ function clubData(){
  const ordered=ui.clubSort==='count'?[...original].sort((a,b)=>countFor(b)-countFor(a)):original;
  const sortButton=(key,label)=>'<button type="button" data-club-sort="'+key+'" class="'+(ui.clubSort===key?'active':'')+'" aria-pressed="'+(ui.clubSort===key)+'">'+label+'</button>';
  const rows=ordered.map(c=>{
-  const putter=c.clubType==='putter'||c.name==='パター'||c.name==='PT';
+  const putter=isPutterClub(c);
   const cs=shots.filter(x=>x.club===c.name),ds=cs.map(x=>Number(x.shotDistance)).filter(Boolean);
   const avgText=putter?'—':ds.length?Math.round(avg(ds))+'y':'—';
-  const cells='<span class="analysis-club-name">'+esc(c.name)+'</span>'
+  const cells='<span class="analysis-club-name">'+esc(clubDisplayName(c.name,c.clubType))+'</span>'
    +'<span class="analysis-club-count">'+(putter?'—':cs.length+'回')+'</span>'
    +'<span class="analysis-club-average">'+avgText+'</span>'
    +'<span class="analysis-club-chevron">'+(putter?'':'›')+'</span>';
-  if(putter)return'<div class="analysis-club-row is-putter" aria-label="'+esc(c.name)+'（ショット分析対象外）">'+cells+'</div>';
-  return '<button type="button" class="analysis-club-row" data-club-detail="'+esc(c.id)+'" aria-label="'+esc(c.name)+'、使用 '+cs.length+'回、平均 '+avgText+'、詳細を開く">'+cells+'</button>';
+  if(putter)return'<div class="analysis-club-row is-putter" aria-label="'+esc(clubDisplayName(c.name,c.clubType))+'（ショット分析対象外）">'+cells+'</div>';
+  return '<button type="button" class="analysis-club-row" data-club-detail="'+esc(c.id)+'" aria-label="'+esc(clubDisplayName(c.name,c.clubType))+'、使用 '+cs.length+'回、平均 '+avgText+'、詳細を開く">'+cells+'</button>';
  }).join('');
  return '<div class="analysis-club-wrap"><div class="analysis-club-toolbar"><span class="analysis-club-toolbar-label">表示順</span>'
   +'<div class="analysis-club-sort" role="group" aria-label="クラブ表示順">'+sortButton('registered','登録順')+sortButton('count','使用回数順')+'</div></div>'
@@ -1335,9 +1338,9 @@ function settingsClubs(){
  return`${settingsHeader('settings')}<div class="page">
  <div class="settings-section-title"><h2>クラブ設定</h2><span>${rows.length} CLUBS</span></div>
  <div class="club-guide"><strong>ラウンド画面では短い表示名を使います。</strong><br>種類と番手を選ぶと「Dr・7I・58°」のような表記になります。その他を使う場合も5文字以内がおすすめです。</div>
- <div class="club-edit-list">${rows.map((club,i)=>{const type=club.clubType||clubTypeFromName(club.name),base=CLUB_NAMES[type]||[],opts=base.includes(club.name)?base:(club.name&&type!=='other'?[club.name,...base]:base);return`<div class="club-edit-card"><div class="club-edit-main">
+ <div class="club-edit-list">${rows.map((club,i)=>{const type=club.clubType||clubTypeFromName(club.name),base=CLUB_NAMES[type]||[],opts=type==='putter'?[club.name||'PT']:(base.includes(club.name)?base:(club.name&&type!=='other'?[club.name,...base]:base));return`<div class="club-edit-card"><div class="club-edit-main">
  <div class="club-edit-field"><label>種類</label><select data-club-field="type" data-index="${i}"><option value="" disabled>選択</option>${CLUB_TYPES.map(([v,l])=>`<option value="${v}" ${type===v?'selected':''}>${l}</option>`).join('')}</select></div>
- <div class="club-edit-field"><label>表示名</label>${type==='other'?`<input data-club-field="name" data-index="${i}" maxlength="5" value="${esc(club.name)}" placeholder="例：11W">`:`<select data-club-field="name" data-index="${i}" ${!type?'disabled':''}><option value="" disabled ${!club.name?'selected':''}>${type?'番手':'種類から'}</option>${opts.map(n=>`<option value="${esc(n)}" ${club.name===n?'selected':''}>${esc(n)}</option>`).join('')}</select>`}</div>
+ <div class="club-edit-field"><label>表示名</label>${type==='other'?`<input data-club-field="name" data-index="${i}" maxlength="5" value="${esc(club.name)}" placeholder="例：11W">`:`<select data-club-field="name" data-index="${i}" ${!type?'disabled':''}><option value="" disabled ${!club.name?'selected':''}>${type?'番手':'種類から'}</option>${opts.map(n=>`<option value="${esc(n)}" ${club.name===n?'selected':''}>${esc(clubDisplayName(n,type))}</option>`).join('')}</select>`}</div>
  <div class="club-edit-field"><label>基準距離</label><div class="club-yard-wrap"><input data-club-field="typical" data-index="${i}" type="number" inputmode="numeric" min="0" max="400" value="${esc(club.typical)}"><span>yd</span></div></div>
  </div><div class="club-edit-actions"><button class="club-icon-btn" data-club-move-draft="${i}" data-dir="-1" ${i===0?'disabled':''}>↑</button><button class="club-icon-btn" data-club-move-draft="${i}" data-dir="1" ${i===rows.length-1?'disabled':''}>↓</button><button class="club-icon-btn delete" data-club-delete-draft="${i}">×</button></div></div>`}).join('')}</div>
  ${rows.length<14?`<button class="club-add" data-action="add-club-draft">＋ クラブを追加</button>`:''}
@@ -1396,7 +1399,7 @@ function settingsData(){
 function holeSheetShotCard(r,h,shot,i){
  const canEdit=r===data.activeRound,expanded=ui.modal?.type==='holeSheet'&&ui.modal.expanded===i,putt=shot.type==='putt';
  const meta=putt?`${Number(shot.puttBeforeM||0).toFixed(1)}m → ${Number(shot.puttAfterM||0)===0?'Cup-in':Number(shot.puttAfterM||0).toFixed(1)+'m'}`:(shotMetaParts(shot).join(' · ')||'詳細入力なし');
- const name=putt?'PT':(shot.club||'未入力');
+ const name=putt?'Pt':(shot.club?clubDisplayName(shot.club):'未入力');
  const distance=putt?(Number(shot.puttAfterM||0)===0?'Cup-in':Number(shot.puttAfterM||0).toFixed(1)+'m'):(Number(shot.shotDistance)>0?Math.round(shot.shotDistance)+'yd':'—');
  const landing=putt?(shot.puttCell||'—'):(shot.landing||'—');
  const fields=[],add=(label,value)=>{if(value!==undefined&&value!==null&&String(value).trim()!=='')fields.push([label,String(value)])};
@@ -1428,7 +1431,7 @@ function shotEditorSheet(h,s,index,d){
  }
  const green=d.directionMode==='green',styles=enabledShotStyles();
  let html='<div class="modal-back"><div class="sheet"><div class="sheet-handle"></div><div class="card-title">'+(index+1)+'打目を修正</div>';
- html+='<div class="label">クラブ</div><div class="club-grid">'+data.settings.clubs.filter(c=>c.clubType!=='putter'&&c.name!=='パター'&&c.name!=='PT').map(c=>'<button class="club-btn '+(d.club===c.name?'active':'')+'" data-edit-field="club" data-value="'+esc(c.name)+'">'+esc(c.name)+'</button>').join('')+'</div>';
+ html+='<div class="label">クラブ</div><div class="club-grid">'+data.settings.clubs.map(c=>'<button class="club-btn '+(d.club===c.name?'active':'')+'" data-edit-field="club" data-value="'+esc(c.name)+'">'+esc(clubDisplayName(c.name,c.clubType))+'</button>').join('')+'</div>';
  html+='<div class="divider"></div><div class="row between"><div class="label" style="margin:0">方向</div><div class="segment two" style="width:170px"><button class="'+(!green?'active':'')+'" data-edit-field="directionMode" data-value="normal">通常</button><button class="'+(green?'active':'')+'" data-edit-field="directionMode" data-value="green">グリーン</button></div></div>';
  html+='<div style="margin-top:10px">'+(green?'<div class="green-grid">'+GREEN_CELLS.map(v=>'<button class="'+(d.greenCell===v?'active':'')+'" data-edit-field="greenCell" data-value="'+v+'">'+v+'</button>').join('')+'</div>':'<div class="direction3">'+SHOT_DIRECTIONS.map(v=>'<button class="'+(d.direction===v?'active':'')+'" data-edit-field="direction" data-value="'+v+'">'+v+'</button>').join('')+'</div>')+'</div>';
  if(data.settings.inputs.ballFlight)html+='<div class="divider"></div><div class="label">球筋</div><div class="grid3">'+BALL_FLIGHTS.map(v=>'<button class="chip blue '+(d.flight===v?'active':'')+'" data-edit-field="flight" data-value="'+v+'">'+v+'</button>').join('')+'</div>';
